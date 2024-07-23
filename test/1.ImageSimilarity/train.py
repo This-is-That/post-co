@@ -72,14 +72,6 @@ def get_custom_data_loader(root_dir, batch_size, transform, shuffle=True, num_wo
     data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
     return data_loader
 
-# 이미지 증강을 위한 transform
-transform = transforms.Compose([
-    transforms.RandomResizedCrop(224),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-])
-
 class EarlyStopping:
     def __init__(self, patience=5, min_delta=0, save_path='./best_model.pth'):
         self.patience = patience
@@ -108,10 +100,10 @@ class EarlyStopping:
         print(f"Model saved with loss {self.best_loss}")
 
 # 모델 및 최적화 설정
-def setup_model_and_optimizer(base_encoder, dim, pred_dim, lr):
+def setup_model_and_optimizer(base_encoder, dim, pred_dim, lr, T_0, T_mult, eta_min):
     model = SimSiam(base_encoder=base_encoder, dim=dim, pred_dim=pred_dim)
     optimizer = optim.Adam(model.parameters(), lr=lr)
-    scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=10, T_mult=1, eta_min=0)
+    scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=T_0, T_mult=T_mult, eta_min=eta_min, verbose=True)
     return model, optimizer, scheduler
 
 # 학습 루프
@@ -147,12 +139,25 @@ if __name__ == "__main__":
     dim = 2048
     pred_dim = 256
     save_path='./best_model.pth'
+    patience = 5
+    min_delta = 0.01
+    T_0 = 10
+    T_mult = 1
+    eta_min = 0
+
+    # 이미지 증강을 위한 transform
+    transform = transforms.Compose([
+        transforms.RandomResizedCrop(224),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
 
     base_encoder=models.resnet50(pretrained=True)
 
     loader = get_custom_data_loader(root_dir=root_dir, batch_size=batch_size, transform=transform, num_workers=num_workers)
-    model, optimizer, scheduler = setup_model_and_optimizer(base_encoder=base_encoder, dim=dim, pred_dim=pred_dim, lr=lr)
+    model, optimizer, scheduler = setup_model_and_optimizer(base_encoder=base_encoder, dim=dim, pred_dim=pred_dim, lr=lr, T_0=T_0, T_mult=T_mult, eta_min=eta_min)
     model = model.to(device)
-    early_stopping = EarlyStopping(patience=5, min_delta=0.01, save_path=save_path)
+    early_stopping = EarlyStopping(patience=patience, min_delta=min_delta, save_path=save_path)
     train_with_cutmix(model=model, loader=loader, optimizer=optimizer, scheduler=scheduler,
                       epochs=epochs, alpha=alpha, device=device, early_stopping=early_stopping)
