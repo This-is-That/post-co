@@ -7,11 +7,9 @@ import os
 from torch.utils.data import Dataset
 from PIL import Image
 from torchvision import transforms
-from torchvision.datasets import CIFAR10
 from torch.utils.data import DataLoader
 from model import SimSiam
-
-# SimSiam 클래스 정의 (위에서 이미 제공된 코드와 같이 정의해야 합니다.)
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 
 def cutmix_data(x, alpha=1.0):
     """Apply CutMix augmentation to a batch of images."""
@@ -52,11 +50,6 @@ def loss_fn(p, z, index, lam):
 # Custom Dataset
 class CustomDataset(Dataset):
     def __init__(self, root_dir, transform=None):
-        """
-        Args:
-            root_dir (string): 이미지 파일이 저장된 디렉토리 경로.
-            transform (callable, optional): 이미지에 적용할 변형(transform).
-        """
         self.root_dir = root_dir
         self.transform = transform
         self.images = [os.path.join(root_dir, fname) for fname in os.listdir(root_dir) if fname.endswith(('.png', '.jpg', '.jpeg'))]
@@ -87,14 +80,42 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
+class EarlyStopping:
+    def __init__(self, patience=5, min_delta=0, save_path='./best_model.pth'):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.best_loss = None
+        self.early_stop = False
+        self.save_path = save_path
+
+    def __call__(self, val_loss, model):
+        if self.best_loss is None:
+            self.best_loss = val_loss
+            self.save_checkpoint(model)
+        elif val_loss > self.best_loss - self.min_delta:
+            self.counter += 1
+            if self.counter >= self.patience:
+                self.early_stop = True
+        else:
+            self.best_loss = val_loss
+            self.counter = 0
+            self.save_checkpoint(model)
+
+    def save_checkpoint(self, model):
+        """Save the current best model."""
+        torch.save(model.state_dict(), self.save_path)
+        print(f"Model saved with loss {self.best_loss}")
+
 # 모델 및 최적화 설정
 def setup_model_and_optimizer(base_encoder, dim, pred_dim, lr):
     model = SimSiam(base_encoder=base_encoder, dim=dim, pred_dim=pred_dim)
     optimizer = optim.Adam(model.parameters(), lr=lr)
-    return model, optimizer
+    scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=10, T_mult=1, eta_min=0)
+    return model, optimizer, scheduler
 
 # 학습 루프
-def train_with_cutmix(model, loader, optimizer, epochs, alpha, device):
+def train_with_cutmix(model, loader, optimizer, scheduler, epochs, alpha, device, early_stopping):
     model.train()
     for epoch in range(epochs):
         for images in loader:
@@ -105,10 +126,17 @@ def train_with_cutmix(model, loader, optimizer, epochs, alpha, device):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            scheduler.step(epoch + len(loader) / len(images))
             print(f"Epoch {epoch}, Loss: {loss.item()}")
+        
+        # Early stopping check
+        early_stopping(loss.item(), model)
+        if early_stopping.early_stop:
+            print("Early stopping")
+            break
     print("Training finished!")
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     batch_size = 64
     lr = 0.001
     epochs = 10
@@ -118,7 +146,13 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dim = 2048
     pred_dim = 256
+    save_path='./best_model.pth'
+
+    base_encoder=models.resnet50(pretrained=True)
 
     loader = get_custom_data_loader(root_dir=root_dir, batch_size=batch_size, transform=transform, num_workers=num_workers)
-    model, optimizer = setup_model_and_optimizer(base_encoder=models.resnet50(pretrained=True), dim=dim, pred_dim=pred_dim, lr = lr)
-    train_with_cutmix(model=model, loader=loader, optimizer=optimizer, epochs=epochs, alpha=alpha, device=device)
+    model, optimizer, scheduler = setup_model_and_optimizer(base_encoder=base_encoder, dim=dim, pred_dim=pred_dim, lr=lr)
+    model = model.to(device)
+    early_stopping = EarlyStopping(patience=5, min_delta=0.01, save_path=save_path)
+    train_with_cutmix(model=model, loader=loader, optimizer=optimizer, scheduler=scheduler,
+                      epochs=epochs, alpha=alpha, device=device, early_stopping=early_stopping)
