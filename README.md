@@ -15,3 +15,7 @@
 4. **Input to Model and Calculate Loss**: Input the modified batches into the model and use the output to calculate the loss. The loss function considers the mix ratio (lam) from CutMix, calculating based on the predictions and actual values from each batch.
 
 5. **Backpropagation and Optimization**: Perform backpropagation based on the calculated loss and optimize the model’s weights. This process helps the model learn to make better predictions.
+
+## Applied technologies in Training
+- **Cosine decay + Warm up**: To improve training speed by reducing the number of epoches required, the training speed is initially gradually increased and then gradually decreased.
+- **Early Stopping**: To prevent overfitting, if the number of epoches increases but the train loss does not decrease, then the training will be terminated.
