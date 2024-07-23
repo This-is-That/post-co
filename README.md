@@ -5,7 +5,7 @@
 ### `BLIP`: for Image Captioning
 ### `all-MiniLM-L6-v2`: for Text Similarity Analytics
 
-## 5 steps for train with a function `cutmix_data`
+## 5 steps for train with `CutMix`
 1. **Load Image Batch**: Use a for loop to retrieve an image batch x from the data loader (loader). This batch consists of groups of images that will be fed into the model during the training process.
 
 2. **Clone Batches**: Utilize the clone() method to create two copies of the original batch x. This allows for the application of various transformations to the same data without altering the original data.
