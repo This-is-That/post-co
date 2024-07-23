@@ -6,11 +6,12 @@ class SimSiam(nn.Module):
         super(SimSiam, self).__init__()
         # Setup the encoder
         self.encoder = base_encoder
-        self.encoder.fc = nn.Identity()  # Remove the classification head
+        self.encoder_dim = self.encoder.classifier[1].in_features  # EfficientNet의 경우 classifier[1]의 in_features 사용
+        self.encoder.classifier = nn.Identity()  # Remove the classification head
 
         # Setup the projector
         self.projector = nn.Sequential(
-            nn.Linear(self.encoder.fc.in_features, dim),
+            nn.Linear(self.encoder_dim, dim),
             nn.BatchNorm1d(dim),
             nn.ReLU(),
             nn.Linear(dim, dim),
@@ -34,11 +35,10 @@ class SimSiam(nn.Module):
 
         p1 = self.predictor(z1)
         p2 = self.predictor(z2)
-        
-        return p1, p2
+
+        return p1, z1, p2, z2
 
 if __name__ == "__main__":
-    # Example of initializing the model with a custom encoder
-    base_encoder = models.resnet50(pretrained=True)
+    base_encoder = models.efficientnet_b3(pretrained=True)
     model = SimSiam(base_encoder=base_encoder, dim=2048, pred_dim=256)
     print(model)

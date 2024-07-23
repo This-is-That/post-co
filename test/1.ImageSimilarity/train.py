@@ -4,6 +4,9 @@ import torch.nn as nn
 import numpy as np
 import torchvision.models as models
 import os
+import csv
+import torch.nn.functional as F
+from tqdm.auto import tqdm
 from torch.utils.data import Dataset
 from PIL import Image
 from torchvision import transforms
@@ -27,8 +30,8 @@ def rand_bbox(size, lam):
     W = size[2]
     H = size[3]
     cut_rat = np.sqrt(1. - lam)
-    cut_w = np.int(W * cut_rat)
-    cut_h = np.int(H * cut_rat)
+    cut_w = int(W * cut_rat)
+    cut_h = int(H * cut_rat)
 
     cx = np.random.randint(W)
     cy = np.random.randint(H)
@@ -40,13 +43,16 @@ def rand_bbox(size, lam):
 
     return bbx1, bby1, bbx2, bby2
 
-def loss_fn(p, z, index, lam):
-    """Calculate loss for CutMix-augmented batch."""
+def D(p, z):
+    """Negative cosine similarity between p and z"""
     z = z.detach()  # Stop gradient
-    p = nn.functional.normalize(p, dim=1)
-    z = nn.functional.normalize(z, dim=1)
-    return -((lam * (p * z).sum(dim=1) + (1 - lam) * (p * z[index]).sum(dim=1)).mean())
+    p = F.normalize(p, dim=1)  # Normalize p
+    z = F.normalize(z, dim=1)  # Normalize z
+    return 1 - (p * z).sum(dim=1).mean()
 
+def simsiam_cutmix_loss_fn(p1, z1, p2, z2, index, lam):
+    """SimSiam loss function with CutMix integration"""
+    return lam * D(p1, z2) + (1 - lam) * D(p1, z2[index]) + lam * D(p2, z1) + (1 - lam) * D(p2, z1[index])
 # Custom Dataset
 class CustomDataset(Dataset):
     def __init__(self, root_dir, transform=None):
@@ -107,43 +113,64 @@ def setup_model_and_optimizer(base_encoder, dim, pred_dim, lr, T_0, T_mult, eta_
     return model, optimizer, scheduler
 
 # 학습 루프
-def train_with_cutmix(model, loader, optimizer, scheduler, epochs, alpha, device, early_stopping):
+def train_with_cutmix(model, loader, optimizer, scheduler, epochs, alpha, device, early_stopping, loss_path):
     model.train()
-    for epoch in range(epochs):
-        for images in loader:
-            images = images.to(device)
-            mixed_images, indices, lam = cutmix_data(images, alpha)
-            p1, p2 = model(mixed_images, images)
-            loss = loss_fn(p1, p2, indices, lam)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            scheduler.step(epoch + len(loader) / len(images))
-            print(f"Epoch {epoch}, Loss: {loss.item()}")
-        
-        # Early stopping check
-        early_stopping(loss.item(), model)
-        if early_stopping.early_stop:
-            print("Early stopping")
-            break
+
+    os.makedirs(os.path.dirname(loss_path), exist_ok=True)
+
+    if not os.path.exists(loss_path):
+        with open(loss_path, 'w', newline='') as csvfile:
+            fieldnames = ['epoch', 'loss', 'learning_rate']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+
+    with open(loss_path, 'a', newline='') as csvfile:
+        fieldnames = ['epoch', 'loss', 'learning_rate']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        for epoch in tqdm(range(epochs)):
+            epoch_loss = 0
+            for images in tqdm(loader):
+                images = images.to(device)
+                mixed_images, indices, lam = cutmix_data(images, alpha)
+                p1, z1, p2, z2 = model(mixed_images, images)
+                loss = simsiam_cutmix_loss_fn(p1, z1, p2, z2, indices, lam)
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                scheduler.step(epoch + len(loader) / len(images))
+                epoch_loss += loss.item()
+            
+            avg_loss = epoch_loss / len(loader)
+            print(f"Epoch {epoch}, Average Loss: {avg_loss}")
+
+            # CSV 파일에 에포크와 손실 값 추가
+            writer.writerow({'epoch': epoch, 'loss': avg_loss, 'learning_rate': scheduler.get_last_lr()[0]})
+            
+            # Early stopping check
+            early_stopping(avg_loss, model)
+            if early_stopping.early_stop:
+                print("Early stopping")
+                break
     print("Training finished!")
 
 if __name__ == "__main__":
-    batch_size = 64
+    batch_size = 32
     lr = 0.001
     epochs = 10
     alpha = 1.0
     root_dir = './image'
     num_workers = 1
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    dim = 2048
-    pred_dim = 256
+    dim = 512
+    pred_dim = 128
     save_path='./best_model.pth'
     patience = 5
     min_delta = 0.01
     T_0 = 10
     T_mult = 1
     eta_min = 0
+    loss_path = './loss_history.csv'
 
     # 이미지 증강을 위한 transform
     transform = transforms.Compose([
@@ -153,11 +180,11 @@ if __name__ == "__main__":
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
-    base_encoder=models.resnet50(pretrained=True)
+    base_encoder = models.efficientnet_b3(pretrained=True)
 
     loader = get_custom_data_loader(root_dir=root_dir, batch_size=batch_size, transform=transform, num_workers=num_workers)
     model, optimizer, scheduler = setup_model_and_optimizer(base_encoder=base_encoder, dim=dim, pred_dim=pred_dim, lr=lr, T_0=T_0, T_mult=T_mult, eta_min=eta_min)
     model = model.to(device)
     early_stopping = EarlyStopping(patience=patience, min_delta=min_delta, save_path=save_path)
     train_with_cutmix(model=model, loader=loader, optimizer=optimizer, scheduler=scheduler,
-                      epochs=epochs, alpha=alpha, device=device, early_stopping=early_stopping)
+                      epochs=epochs, alpha=alpha, device=device, early_stopping=early_stopping, loss_path=loss_path)
