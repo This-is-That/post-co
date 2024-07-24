@@ -142,7 +142,7 @@ def train_with_cutmix(model, loader, optimizer, scheduler, epochs, alpha, device
                 epoch_loss += loss.item()
             
             avg_loss = epoch_loss / len(loader)
-            print(f"Epoch {epoch}, Average Loss: {avg_loss}")
+            print(f"Epoch {epoch}, Average Loss: {avg_loss}, learning rate: {scheduler.get_last_lr()[0]}")
 
             # CSV 파일에 에포크와 손실 값 추가
             writer.writerow({'epoch': epoch, 'loss': avg_loss, 'learning_rate': scheduler.get_last_lr()[0]})
