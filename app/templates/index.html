@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Similarity Analytics Web Service</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+</head>
+
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <!-- Header Section -->
+    <header class="bg-white shadow w-full">
+        <div class="container mx-auto flex justify-between items-center" style="height: 120px;">
+            <!-- Replace Text with Image -->
+            <a href="https://www.kopis.or.kr">
+                <img src="{{ url_for('static', filename='images/kopis.png') }}" alt="KOPIS" style="height: 100px; width: auto;">
+            </a>
+            <!-- Navigation Links -->
+            <nav class="flex space-x-8 text-gray-700">
+                <a href="https://www.kopis.or.kr" class="hover:text-blue-600">Home</a>
+                <a href="https://github.com/This-is-That/poster-copycatch" class="hover:text-blue-600">About</a>
+                <a href="mailto:wlghks7790@gmail.com" class="hover:text-blue-600">Contact</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Section -->
+    <main class="flex-grow flex items-center justify-center">
+        <div class="flex flex-col items-center justify-center w-full max-w-4xl p-6 bg-white shadow-lg rounded-lg">
+            <div class="w-full">
+                <img src="{{ url_for('static', filename='images/title.png') }}" alt="Similarity Analytics"
+                    class="w-full h-64 object-cover object-center rounded-lg">
+            </div>
+            <div class="w-full mt-6">
+                <h2 class="text-2xl font-bold text-gray-900">Similarity Analytics Web Service</h2>
+                <p class="text-sm text-gray-600 mt-2">Discover similar images with your text or image.</p>
+
+                <input type="text" id="searchInput"
+                    class="border border-gray-300 rounded-lg p-2 w-full h-10 mt-4" placeholder="Enter your search text">
+
+                <div id="dropArea"
+                    class="border-dashed border-2 border-gray-400 p-6 mt-4 text-center rounded-lg relative w-full flex flex-col items-center justify-center">
+                    <p class="text-sm text-gray-600">Drag & Drop your image here, or click the button to upload</p>
+                    <button id="uploadBtn" type="button"
+                        class="mt-4 text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 rounded-lg px-4 py-2">Upload
+                        Image</button>
+                    <input type="file" id="fileInput" class="hidden" accept="image/*">
+                </div>
+
+                <button id="getStartedBtn" type="button"
+                    class="w-full mt-4 text-white bg-gray-400 cursor-not-allowed rounded-lg px-4 py-2 text-sm"
+                    disabled>Get Started</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="bg-white w-full py-4">
+        <div class="container mx-auto text-center text-gray-600">
+            © 2024 Your Company. All rights reserved.
+        </div>
+    </footer>
+
+    <script>
+        const getStartedBtn = document.getElementById('getStartedBtn');
+        const searchInput = document.getElementById('searchInput');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const dropArea = document.getElementById('dropArea');
+
+        function toggleGetStartedButton() {
+            const isEnabled = searchInput.value.trim() || fileInput.files.length;
+            getStartedBtn.disabled = !isEnabled;
+            getStartedBtn.classList.toggle('bg-blue-600', isEnabled);
+            getStartedBtn.classList.toggle('hover:bg-blue-700', isEnabled);
+            getStartedBtn.classList.toggle('bg-gray-400', !isEnabled);
+            getStartedBtn.classList.toggle('cursor-not-allowed', !isEnabled);
+            getStartedBtn.classList.toggle('cursor-pointer', isEnabled);
+        }
+
+        function sendPostRequest(data) {
+            fetch('/process', {
+                method: 'POST',
+                body: data
+            })
+                .then(response => response.json())
+                .then(result => {
+                    alert('Request successful!');
+                    console.log(result);
+                })
+                .catch(error => {
+                    alert('An error occurred: ' + error.message);
+                });
+        }
+
+        function handleFileUpload() {
+            if (fileInput.files.length) {
+                const formData = new FormData();
+                formData.append('image', fileInput.files[0]);
+                sendPostRequest(formData);
+            }
+        }
+
+        function handleGetStarted() {
+            if (searchInput.value.trim()) {
+                const formData = new FormData();
+                formData.append('text', searchInput.value.trim());
+                sendPostRequest(formData);
+            }
+        }
+
+        searchInput.addEventListener('input', toggleGetStartedButton);
+        fileInput.addEventListener('change', () => {
+            toggleGetStartedButton();
+            handleFileUpload();
+        });
+
+        uploadBtn.addEventListener('click', function () {
+            fileInput.click();
+        });
+
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.classList.add('border-blue-600');
+        });
+
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.classList.remove('border-blue-600');
+        });
+
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.classList.remove('border-blue-600');
+            if (e.dataTransfer.files && e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                toggleGetStartedButton();
+                handleFileUpload();
+            }
+        });
+
+        getStartedBtn.addEventListener('click', handleGetStarted);
+    </script>
+</body>
+
+</html>
