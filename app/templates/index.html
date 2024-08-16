@@ -12,11 +12,9 @@
     <!-- Header Section -->
     <header class="bg-white shadow w-full">
         <div class="container mx-auto flex justify-between items-center" style="height: 120px;">
-            <!-- Replace Text with Image -->
             <a href="https://www.kopis.or.kr">
                 <img src="{{ url_for('static', filename='images/kopis.png') }}" alt="KOPIS" style="height: 100px; width: auto;">
             </a>
-            <!-- Navigation Links -->
             <nav class="flex space-x-8 text-gray-700">
                 <a href="https://www.kopis.or.kr" class="hover:text-blue-600">Home</a>
                 <a href="https://github.com/This-is-That/poster-copycatch" class="hover:text-blue-600">About</a>
@@ -55,10 +53,18 @@
         </div>
     </main>
 
+    <!-- Image Results Section -->
+    <section id="imageResults" class="container mx-auto py-6">
+        <h3 class="text-lg font-bold text-gray-800">Search Results</h3>
+        <div id="imageContainer" class="grid grid-cols-3 gap-4 mt-4">
+            <!-- 이미지가 이곳에 추가될 예정입니다. -->
+        </div>
+    </section>
+
     <!-- Footer Section -->
     <footer class="bg-white w-full py-4">
         <div class="container mx-auto text-center text-gray-600">
-            © 2024 Your Company. All rights reserved.
+            © 2024 This-is-That All rights reserved.
         </div>
     </footer>
 
@@ -68,9 +74,12 @@
         const fileInput = document.getElementById('fileInput');
         const uploadBtn = document.getElementById('uploadBtn');
         const dropArea = document.getElementById('dropArea');
-
+        const imageContainer = document.getElementById('imageContainer');
+        let isRequesting = false;
+    
+        // 텍스트 입력 여부에 따라 Get Started 버튼 활성화
         function toggleGetStartedButton() {
-            const isEnabled = searchInput.value.trim() || fileInput.files.length;
+            const isEnabled = searchInput.value.trim().length > 0;
             getStartedBtn.disabled = !isEnabled;
             getStartedBtn.classList.toggle('bg-blue-600', isEnabled);
             getStartedBtn.classList.toggle('hover:bg-blue-700', isEnabled);
@@ -78,67 +87,117 @@
             getStartedBtn.classList.toggle('cursor-not-allowed', !isEnabled);
             getStartedBtn.classList.toggle('cursor-pointer', isEnabled);
         }
-
+    
         function sendPostRequest(data) {
             fetch('/process', {
                 method: 'POST',
-                body: data
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
             })
+            .then(response => response.json())
+            .then(result => {
+                displayImages(result.image_links);
+            })
+            .catch(error => {
+                alert('An error occurred: ' + error.message);
+            });
+        }
+    
+        function displayImages(imageLinks) {
+            // 기존 이미지를 모두 제거합니다.
+            imageContainer.innerHTML = '';
+            
+            // imageLinks가 배열인지 확인합니다.
+            if (Array.isArray(imageLinks)) {
+                // 이미지 링크 리스트에서 이미지들을 추가합니다.
+                imageLinks.forEach(link => {
+                    const imgElement = document.createElement('img');
+                    imgElement.src = link;
+                    imgElement.alt = 'Search Result Image';
+                    imgElement.classList.add('w-full', 'h-auto', 'rounded-lg', 'shadow');
+                    imageContainer.appendChild(imgElement);
+                });
+            } else {
+                console.error('Invalid image links format:', imageLinks);
+                alert('서버에서 잘못된 형식의 응답을 받았습니다.');
+            }
+        }
+    
+        function handleFileUpload() {
+            if (fileInput.files.length && !isRequesting) {
+                isRequesting = true; // 요청 시작
+                const formData = new FormData();
+                formData.append('image', fileInput.files[0]);
+                fetch('/process', {
+                    method: 'POST',
+                    body: formData
+                })
                 .then(response => response.json())
                 .then(result => {
-                    alert('Request successful!');
-                    console.log(result);
+                    displayImages(result.image_links);
                 })
                 .catch(error => {
                     alert('An error occurred: ' + error.message);
+                })
+                .finally(() => {
+                    isRequesting = false; // 요청 완료
                 });
-        }
-
-        function handleFileUpload() {
-            if (fileInput.files.length) {
-                const formData = new FormData();
-                formData.append('image', fileInput.files[0]);
-                sendPostRequest(formData);
             }
         }
-
+    
         function handleGetStarted() {
-            if (searchInput.value.trim()) {
-                const formData = new FormData();
-                formData.append('text', searchInput.value.trim());
-                sendPostRequest(formData);
+            if (searchInput.value.trim() && !isRequesting) {
+                isRequesting = true; // 요청 시작
+                const data = {
+                    text: searchInput.value.trim()
+                };
+                fetch('/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    displayImages(result.image_links);
+                })
+                .catch(error => {
+                    alert('An error occurred: ' + error.message);
+                })
+                .finally(() => {
+                    isRequesting = false; // 요청 완료
+                });
             }
         }
-
+    
         searchInput.addEventListener('input', toggleGetStartedButton);
-        fileInput.addEventListener('change', () => {
-            toggleGetStartedButton();
-            handleFileUpload();
-        });
-
+        fileInput.addEventListener('change', handleFileUpload);
+    
         uploadBtn.addEventListener('click', function () {
             fileInput.click();
         });
-
+    
         dropArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             dropArea.classList.add('border-blue-600');
         });
-
+    
         dropArea.addEventListener('dragleave', () => {
             dropArea.classList.remove('border-blue-600');
         });
-
+    
         dropArea.addEventListener('drop', (e) => {
             e.preventDefault();
             dropArea.classList.remove('border-blue-600');
             if (e.dataTransfer.files && e.dataTransfer.files.length) {
                 fileInput.files = e.dataTransfer.files;
-                toggleGetStartedButton();
                 handleFileUpload();
             }
         });
-
+    
         getStartedBtn.addEventListener('click', handleGetStarted);
     </script>
 </body>

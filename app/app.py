@@ -1,18 +1,38 @@
 from flask import Flask, request, jsonify, render_template
 from CLIP import CLIP
+from googletrans import Translator
+import mysql.connector
+import os
 
 app = Flask(__name__)
 clip = CLIP()
+translator = Translator()
 
-# Mock function to handle text input and return image links
-def process_embedding(embedding):
-    # Here, you would have your logic to process the text and generate image links
-    # For simplicity, we're returning a static list of image links
-    return [
-        "https://example.com/image1.jpg",
-        "https://example.com/image2.jpg",
-        "https://example.com/image3.jpg"
-    ]
+def process_embedding(embedding, cursor):
+    # 커서 객체 생성
+    try:
+        # 'images_main' 테이블에서 상위 3개의 'image_url' 값 선택
+        cursor.execute("SELECT image_url FROM images_main LIMIT 3")
+        
+        # 결과를 리스트로 저장
+        image_urls = [row[0] for row in cursor.fetchall()]
+
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+    finally:
+        # 리소스 정리
+        cursor.close()
+        # db_connection.close()
+
+    return image_urls
+
+def translate_text(text, src='ko', dest='en'):
+    translation = translator.translate(text, src=src, dest=dest)
+    return translation.text
+
+def allowed_file(filename):
+    # Check if the file is an allowed type (e.g., .jpg, .png)
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'jpg', 'jpeg', 'png'}
 
 @app.route('/')
 def index():
@@ -21,27 +41,40 @@ def index():
 
 @app.route('/process', methods=['POST'])
 def process_input():
-    if request.content_type == 'application/json':
-        if 'text' in request.json:
-            text = request.json['text']
-            embedding = clip.extract_text_embedding(text)
-        else:
-            return jsonify({'error': 'No valid JSON data provided'}), 400
-    elif 'image' in request.files:
-        image_file = request.files['image']
-        if image_file and allowed_file(image_file.filename):
-            embedding = clip.extract_image_embedding(image_file)
-        else:
-            return jsonify({'error': 'No valid image file provided'}), 400
-    else:
-        return jsonify({'error': 'No valid input provided'}), 400
+    db_connection = mysql.connector.connect(
+        host=os.environ['KOPIS_DB_HOST'],       # MySQL 서버 호스트명
+        user=os.environ['KOPIS_DB_USER'],   # MySQL 사용자 이름
+        password=os.environ['KOPIS_DB_PASSWORD'], # MySQL 비밀번호
+        database=os.environ['KOPIS_DB_DATABASE']  # 연결할 데이터베이스 이름
+    )
+    cursor = db_connection.cursor()
 
-    image_links = process_embedding(embedding)
-    return jsonify({'image_links': image_links, 'embedding': embedding.cpu().tolist()})
+    try:
+        if 'image' in request.files:
+            image_file = request.files['image']
+            if image_file and allowed_file(image_file.filename):
+                embedding = clip.extract_image_embedding(image_file)
+            else:
+                return jsonify({'error': 'No valid image file provided'}), 400
+        elif request.content_type == 'application/json':
+            if 'text' in request.json:
+                text = request.json['text']
+                translated_text = translate_text(text)
+                embedding = clip.extract_text_embedding(translated_text)
+            else:
+                return jsonify({'error': 'No valid JSON data provided'}), 400
+        else:
+            return jsonify({'error': 'No valid input provided'}), 400
 
-def allowed_file(filename):
-    # Check if the file is an allowed type (e.g., .jpg, .png)
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'jpg', 'jpeg', 'png'}
+        image_links = process_embedding(embedding, cursor)
+        return jsonify({'image_links': image_links, 'embedding': embedding.cpu().tolist()})
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+    finally:
+        cursor.close()
+        db_connection.close()
 
 @app.errorhandler(400)
 def bad_request(error):
