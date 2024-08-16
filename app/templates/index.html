@@ -22,12 +22,12 @@
     <!-- Header Section -->
     <header class="bg-white shadow w-full">
         <div class="container mx-auto flex justify-between items-center" style="height: 120px;">
-            <a href="https://www.kopis.or.kr">
+            <a href="https://www.kopis.or.kr" target="_blank">
                 <img src="{{ url_for('static', filename='images/kopis.gif') }}" alt="KOPIS" style="height: 45px; width: auto;">
             </a>
             <nav class="flex space-x-8 text-gray-700 relative">
-                <a href="https://www.kopis.or.kr" class="hover:text-blue-600">HOME</a>
-                <a href="https://github.com/This-is-That/poster-copycatch" class="hover:text-blue-600">ABOUT</a>
+                <a href="https://www.kopis.or.kr" target="_blank" class="hover:text-blue-600">HOME</a>
+                <a href="https://github.com/This-is-That/poster-copycatch" target="_blank" class="hover:text-blue-600">ABOUT</a>
                 <div class="relative group">
                     <a href="#" class="hover:text-blue-600">CONTACT</a>
                     <div class="absolute hidden group-hover:flex flex-col items-center bg-white border border-gray-300 shadow-lg p-4 rounded-lg" style="width: 250px; left: 50%; transform: translateX(-50%); top: 100%;">
@@ -121,7 +121,7 @@
                 // Hide the popup after 2 seconds
                 setTimeout(() => {
                     popup.classList.add('hidden');
-                }, 2000);
+                }, 1500);
             }, function(err) {
                 console.error('Could not copy text: ', err);
             });
