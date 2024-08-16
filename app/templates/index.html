@@ -191,6 +191,11 @@
                 })).then(() => {
                     // Search Results 섹션으로 부드럽게 스크롤
                     document.getElementById('imageResults').scrollIntoView({ behavior: 'smooth' });
+                    // If {behavior: 'smooth'} doesn't work, try the following process in Chrome browser...
+                    // 1. open a new tab
+                    // 2. type "chrome://flags" and hit enter
+                    // 3. in search bar search for "smooth scrolling"
+                    // 4. enable it and reload
                 });
             } else {
                 console.error('Invalid image links format:', imageLinks);
