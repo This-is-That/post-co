@@ -12,7 +12,7 @@ def process_embedding(embedding, cursor):
     # 커서 객체 생성
     try:
         # 'images_main' 테이블에서 상위 3개의 'image_url' 값 선택
-        cursor.execute("SELECT image_url FROM images_main LIMIT 3")
+        cursor.execute("SELECT image_url FROM images_main LIMIT 6")
         
         # 결과를 리스트로 저장
         image_urls = [row[0] for row in cursor.fetchall()]

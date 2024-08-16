@@ -6,6 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Similarity Analytics Web Service</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <style>
+        .group:hover .group-hover\:flex {
+            display: flex;
+        }
+        #copyPopup {
+        transition: opacity 0.3s ease-in-out;
+        font-size: 0.875rem;
+        transform: translateX(-50%);
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen flex flex-col">
@@ -15,10 +25,19 @@
             <a href="https://www.kopis.or.kr">
                 <img src="{{ url_for('static', filename='images/kopis.png') }}" alt="KOPIS" style="height: 100px; width: auto;">
             </a>
-            <nav class="flex space-x-8 text-gray-700">
+            <nav class="flex space-x-8 text-gray-700 relative">
                 <a href="https://www.kopis.or.kr" class="hover:text-blue-600">Home</a>
                 <a href="https://github.com/This-is-That/poster-copycatch" class="hover:text-blue-600">About</a>
-                <a href="mailto:wlghks7790@gmail.com" class="hover:text-blue-600">Contact</a>
+                <div class="relative group">
+                    <a href="#" class="hover:text-blue-600">Contact</a>
+                    <div class="absolute hidden group-hover:flex flex-col items-center bg-white border border-gray-300 shadow-lg p-4 rounded-lg" style="width: 250px; left: 50%; transform: translateX(-50%); top: 100%;">
+                        <div class="flex items-center justify-center w-full">
+                            <img src="{{ url_for('static', filename='images/mail.png') }}" alt="Mail Icon" class="w-4 h-4 mr-2">
+                            <p id="emailText" class="text-gray-600">wlghks7790@gmail.com</p>
+                        </div>
+                        <button id="copyButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 rounded-lg px-4 py-2 text-sm mt-2">COPY</button>
+                    </div>
+                </div>
             </nav>
         </div>
     </header>
@@ -26,19 +45,19 @@
     <!-- Main Section -->
     <main class="flex-grow flex items-center justify-center">
         <div class="flex flex-col items-center justify-center w-full max-w-4xl p-6 bg-white shadow-lg rounded-lg">
-            <div class="w-full">
+            <!-- <div class="w-full">
                 <img src="{{ url_for('static', filename='images/title.png') }}" alt="Similarity Analytics"
                     class="w-full h-64 object-cover object-center rounded-lg">
-            </div>
+            </div> -->
             <div class="w-full mt-6">
                 <h2 class="text-2xl font-bold text-gray-900">Similarity Analytics Web Service</h2>
                 <p class="text-sm text-gray-600 mt-2">Discover similar images with your text or image.</p>
 
                 <input type="text" id="searchInput"
-                    class="border border-gray-300 rounded-lg p-2 w-full h-10 mt-4" placeholder="Enter your search text">
+                    class="border border-gray-300 rounded-lg p-2 w-full h-11 mt-4" placeholder="Enter your search text">
 
                 <div id="dropArea"
-                    class="border-dashed border-2 border-gray-400 p-6 mt-4 text-center rounded-lg relative w-full flex flex-col items-center justify-center">
+                    class="border-dashed border-2 border-gray-400 p-16 mt-4 text-center rounded-lg relative w-full flex flex-col items-center justify-center">
                     <p class="text-sm text-gray-600">Drag & Drop your image here, or click the button to upload</p>
                     <button id="uploadBtn" type="button"
                         class="mt-4 text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 rounded-lg px-4 py-2">Upload
@@ -69,11 +88,7 @@
     <!-- Loading Popup -->
     <div id="loadingPopup" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white p-4 rounded-lg shadow-lg flex items-center justify-center">
-            <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-            </svg>
-            <p class="ml-4 text-blue-600">Loading...</p>
+            <img src="{{ url_for('static', filename='images/loading.gif') }}" alt="Loading" class="h-48 w-48">
         </div>
     </div>
 
@@ -84,7 +99,34 @@
         </div>
     </footer>
 
+    <!-- Temporary Popup for Email Copy Confirmation -->
+    <div id="copyPopup" class="fixed hidden bg-blue-600 text-white p-3 rounded-lg shadow-lg" style="z-index: 1000;">
+        Email copied to clipboard!
+    </div>
+
     <script>
+        document.getElementById('copyButton').addEventListener('click', function (event) {
+            const emailText = document.getElementById('emailText').innerText;
+            navigator.clipboard.writeText(emailText).then(function() {
+                // Get the copy button's position
+                const copyButton = event.target;
+                const buttonRect = copyButton.getBoundingClientRect();
+
+                // Show the popup
+                const popup = document.getElementById('copyPopup');
+                popup.style.left = `${buttonRect.left + buttonRect.width / 2}px`;
+                popup.style.top = `${buttonRect.bottom + 10}px`; // 10px below the button
+                popup.classList.remove('hidden');
+                
+                // Hide the popup after 2 seconds
+                setTimeout(() => {
+                    popup.classList.add('hidden');
+                }, 2000);
+            }, function(err) {
+                console.error('Could not copy text: ', err);
+            });
+        });
+
         const getStartedBtn = document.getElementById('getStartedBtn');
         const searchInput = document.getElementById('searchInput');
         const fileInput = document.getElementById('fileInput');
@@ -92,8 +134,7 @@
         const dropArea = document.getElementById('dropArea');
         const imageContainer = document.getElementById('imageContainer');
         let isRequesting = false;
-    
-        // 텍스트 입력 여부에 따라 Get Started 버튼 활성화
+
         function toggleGetStartedButton() {
             const isEnabled = searchInput.value.trim().length > 0;
             getStartedBtn.disabled = !isEnabled;
@@ -130,19 +171,26 @@
         }
 
         function displayImages(imageLinks) {
-            hideLoadingPopup(); // 로딩 팝업 숨기기
+            hideLoadingPopup(); 
 
-            // 기존 이미지를 모두 제거합니다.
             imageContainer.innerHTML = '';
             
             if (Array.isArray(imageLinks)) {
-                // 이미지 링크 리스트에서 이미지들을 추가합니다.
                 imageLinks.forEach(link => {
                     const imgElement = document.createElement('img');
                     imgElement.src = link;
                     imgElement.alt = 'Search Result Image';
                     imgElement.classList.add('w-full', 'h-auto', 'rounded-lg', 'shadow');
                     imageContainer.appendChild(imgElement);
+                });
+                
+                // 모든 이미지가 로드된 후 스크롤
+                Promise.all(Array.from(imageContainer.querySelectorAll('img')).map(img => {
+                    if (img.complete) return Promise.resolve();
+                    return new Promise(resolve => { img.onload = img.onerror = resolve; });
+                })).then(() => {
+                    // Search Results 섹션으로 부드럽게 스크롤
+                    document.getElementById('imageResults').scrollIntoView({ behavior: 'smooth' });
                 });
             } else {
                 console.error('Invalid image links format:', imageLinks);
@@ -152,8 +200,8 @@
 
         function handleFileUpload() {
             if (fileInput.files.length && !isRequesting) {
-                isRequesting = true; // 요청 시작
-                showLoadingPopup(); // 로딩 팝업 표시
+                isRequesting = true; 
+                showLoadingPopup(); 
                 const formData = new FormData();
                 formData.append('image', fileInput.files[0]);
                 fetch('/process', {
@@ -168,15 +216,15 @@
                     alert('An error occurred: ' + error.message);
                 })
                 .finally(() => {
-                    isRequesting = false; // 요청 완료
+                    isRequesting = false; 
                 });
             }
         }
 
         function handleGetStarted() {
             if (searchInput.value.trim() && !isRequesting) {
-                isRequesting = true; // 요청 시작
-                showLoadingPopup(); // 로딩 팝업 표시
+                isRequesting = true; 
+                showLoadingPopup(); 
                 const data = {
                     text: searchInput.value.trim()
                 };
@@ -195,7 +243,7 @@
                     alert('An error occurred: ' + error.message);
                 })
                 .finally(() => {
-                    isRequesting = false; // 요청 완료
+                    isRequesting = false; 
                 });
             }
         }
