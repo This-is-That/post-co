@@ -19,10 +19,6 @@ def process_embedding(embedding, cursor):
 
     except mysql.connector.Error as err:
         print(f"Error: {err}")
-    finally:
-        # 리소스 정리
-        cursor.close()
-        # db_connection.close()
 
     return image_urls
 
