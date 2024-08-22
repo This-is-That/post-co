@@ -4,7 +4,6 @@ import mysql.connector
 import os
 from tqdm.auto import tqdm
 import json
-import pickle
 import re
 
 # 데이터베이스에서 특징 벡터와 이미지 ID를 가져오는 함수
@@ -50,7 +49,8 @@ def get_feature_vectors_and_ids_from_db():
 # FAISS 인덱스 생성 및 학습
 def build_faiss_index(vectors, ids):
     dimension = vectors.shape[1]
-    index = faiss.IndexFlatL2(dimension)  # L2 거리 기반 인덱스
+    index = faiss.IndexFlatIP(dimension) # IndexFlatL2 대신에 IndexFlatIP
+    faiss.normalize_L2(vectors) # vector를 add하기 전에 normalize_L2
     id_index = faiss.IndexIDMap2(index)   # ID와 벡터를 매핑할 인덱스
     
     # 벡터와 정수 ID를 함께 추가
