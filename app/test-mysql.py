@@ -13,14 +13,27 @@ db_connection = mysql.connector.connect(
 cursor = db_connection.cursor()
 
 try:
-    # 'images_main' 테이블에서 상위 3개의 'image_url' 값 선택
-    cursor.execute("SELECT image_url FROM images_main LIMIT 3")
-    
-    # 결과를 리스트로 저장
-    image_urls = [row[0] for row in cursor.fetchall()]
+    cursor.execute("SHOW TABLES")
+    tables = cursor.fetchall()
 
-    # 리스트 출력
-    print("Image URLs:", image_urls)
+    for table in tables:
+        table_name = table[0]
+        
+        # 각 테이블의 컬럼 명 가져오기
+        cursor.execute(f"SHOW COLUMNS FROM {table_name}")
+        columns = cursor.fetchall()
+        column_names = [column[0] for column in columns]  # 컬럼 명 리스트 생성
+        
+        # 각 테이블의 총 데이터 개수 가져오기
+        cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+        count = cursor.fetchone()[0]
+        
+        # 각 테이블의 상위 5개 값 가져오기
+        cursor.execute(f"SELECT * FROM {table_name} LIMIT 6")
+        rows = cursor.fetchall()
+        
+        # 결과 출력
+        print(f"Table: {table_name}, Columns: {column_names}, Total Count: {count}, Top 6 Rows: {rows}")
 
 except mysql.connector.Error as err:
     print(f"Error: {err}")

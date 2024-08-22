@@ -1,3 +1,5 @@
 config.json
 .vscode
 __pycache__
+app/temp
+app/data/faiss_indices/faiss_index.bin
