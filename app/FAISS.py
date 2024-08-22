@@ -26,7 +26,7 @@ def get_image_urls_from_db(image_ids, db_connection, cursor):
     return image_urls
 
 # 가장 유사한 이미지 찾기
-def find_similar_images(query_vector, index, top_n=5, ef_search=100):
+def find_similar_images(query_vector, index, top_n=5):
     try:
         # Ensure query_vector is a 2D numpy array
         if isinstance(query_vector, torch.Tensor):

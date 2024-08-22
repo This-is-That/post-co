@@ -29,8 +29,9 @@ def get_feature_vectors_and_ids_from_db():
         
         try:
             vector = json.loads(vector_json)  # JSON 문자열을 리스트로 변환
-        except json.JSONDecodeError:
-            print(f"Error decoding JSON for image ID: {image_id}")
+            vector = np.array(vector, dtype=np.float32)  # numpy 배열로 변환
+        except (json.JSONDecodeError, ValueError):
+            print(f"Error decoding or converting JSON for image ID: {image_id}")
             continue
         
         # 문자열 ID에서 PF를 제거하고 정수로 변환

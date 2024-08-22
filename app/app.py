@@ -74,7 +74,7 @@ def process_input():
             return jsonify({'error': '유효한 입력이 제공되지 않았습니다'}), 400
 
         image_id_url, distances = process_embedding(embedding, db_connection, cursor)
-    
+        # print(image_id_url)
         return jsonify({'image_links': list(image_id_url.values()), 'embedding': embedding.cpu().tolist()})
     
     except Exception as e:
