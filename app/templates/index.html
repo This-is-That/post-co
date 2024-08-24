@@ -45,16 +45,29 @@
     <!-- Main Section -->
     <main class="flex-grow flex items-center justify-center">
         <div class="flex flex-col items-center justify-center w-full max-w-4xl p-6 bg-white shadow-lg rounded-lg">
-            <!-- <div class="w-full">
-                <img src="{{ url_for('static', filename='images/title.png') }}" alt="Similarity Analytics"
-                    class="w-full h-64 object-cover object-center rounded-lg">
-            </div> -->
-            <div class="w-full mt-6">
+            <div class="w-full mt-8 text-center">
                 <h2 class="text-2xl font-bold text-gray-900">Similarity Analytics Web Service</h2>
                 <p class="text-sm text-gray-600 mt-2">Discover similar images with your text or image.</p>
 
-                <input type="text" id="searchInput"
-                    class="border border-gray-300 rounded-lg p-2 w-full h-11 mt-4" placeholder="Enter your search text">
+                <div class="relative mt-11 w-full">
+                    <input type="text" id="searchInput" class="border border-gray-300 rounded-lg p-2 w-full h-11" placeholder="Enter your search text">
+                    <button id="clearInputBtn" class="absolute right-4 top-2.5 text-black-500 hover:text-black-700 hidden">✕</button>
+                </div>
+
+                <div class="flex space-x-4 mt-2">
+                    <div class="border border-gray-300 rounded-lg p-2 w-full example-text cursor-pointer">
+                        <span class="block">🌊 이건 바다 이미지야.</span>
+                        <span class="block text-gray-500 text-sm">바다가 그려진 포스터를 보여드려요!</span>
+                    </div>
+                    <div class="border border-gray-300 rounded-lg p-2 w-full example-text cursor-pointer">
+                        <span class="block">🏖 이건 여름 이미지야.</span>
+                        <span class="block text-gray-500 text-sm">여름 풍경을 감상해보세요!</span>
+                    </div>
+                    <div class="border border-gray-300 rounded-lg p-2 w-full example-text cursor-pointer">
+                        <span class="block">🎨 이건 다채로운 이미지야.</span>
+                        <span class="block text-gray-500 text-sm">다양한 색상을 느껴보세요!</span>
+                    </div>
+                </div>
 
                 <button id="getStartedBtn" type="button"
                     class="w-full mt-4 text-white bg-gray-400 cursor-not-allowed rounded-lg px-4 py-2 text-sm"
@@ -121,6 +134,16 @@
                 console.error('Could not copy text: ', err);
             });
         });
+
+        document.querySelectorAll('.example-text').forEach(box => {
+            box.addEventListener('click', function() {
+                searchInput.value = this.querySelector('span').textContent.trim();
+                toggleGetStartedButton(); // 버튼 활성화 상태 업데이트
+                if (!getStartedBtn.disabled) {
+                    getStartedBtn.click(); // Get Started 버튼 클릭
+                }
+            });
+        });
     
         const getStartedBtn = document.getElementById('getStartedBtn');
         const searchInput = document.getElementById('searchInput');
@@ -128,6 +151,7 @@
         const uploadBtn = document.getElementById('uploadBtn');
         const dropArea = document.getElementById('dropArea');
         const imageContainer = document.getElementById('imageContainer');
+        const clearInputBtn = document.getElementById('clearInputBtn');
         let isRequesting = false;
     
         function toggleGetStartedButton() {
@@ -241,7 +265,6 @@
             }
         }
     
-        searchInput.addEventListener('input', toggleGetStartedButton);
         fileInput.addEventListener('change', handleFileUpload);
     
         uploadBtn.addEventListener('click', function () {
@@ -268,12 +291,15 @@
     
         getStartedBtn.addEventListener('click', handleGetStarted);
     
-        // 추가된 코드: Enter 키로 검색 시작
-        searchInput.addEventListener('keydown', function (event) {
-            if (event.key === 'Enter' && searchInput.value.trim()) {
-                event.preventDefault();  // Enter 키의 기본 동작을 막음
-                handleGetStarted();  // 검색 시작
-            }
+        searchInput.addEventListener('input', function() {
+            toggleGetStartedButton(); // 버튼 활성화 상태 업데이트
+            clearInputBtn.style.display = this.value ? 'block' : 'none';
+        });
+
+        clearInputBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            clearInputBtn.style.display = 'none';
+            toggleGetStartedButton(); // 버튼 비활성화 상태로 업데이트
         });
     </script>
 </body>
