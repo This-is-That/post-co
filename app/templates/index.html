@@ -108,15 +108,6 @@
         </div>
     </div>
 
-    <!-- Image Popup -->
-    <div id="imagePopup" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
-        <div class="bg-white p-4 rounded-lg shadow-lg relative max-w-sm w-full">
-            <button id="closePopupBtn" class="absolute top-2 right-2 text-gray-600 hover:text-gray-800">✕</button>
-            <img id="popupImage" class="w-full h-auto rounded-lg mb-4" src="" alt="Selected Image">
-            <p class="text-gray-800"><strong>ID:</strong> <span id="popupImageID"></span></p>
-        </div>
-    </div>
-
     <!-- Temporary Popup for Email Copy Confirmation -->
     <div id="copyPopup" class="fixed hidden bg-blue-600 text-white p-3 rounded-lg shadow-lg" style="z-index: 1000;">
         Email copied to clipboard!
@@ -152,6 +143,7 @@
 
         function displayImages(imageLinks, imageIds, imageInfos) {
             hideLoadingPopup();
+            isRequesting = false;
 
             imageContainer.innerHTML = '';
 
@@ -202,10 +194,6 @@
                         }, 100);
                     });
 
-                    imgElement.addEventListener('click', function() {
-                        showImagePopup(link, this.dataset.id);
-                    });
-
                     const wrapper = document.createElement('div');
                     wrapper.classList.add('relative');
                     wrapper.appendChild(imgElement);
@@ -223,12 +211,6 @@
                 console.error('Invalid image links format:', imageLinks);
                 alert('서버에서 잘못된 형식의 응답을 받았습니다.');
             }
-        }
-
-        function showImagePopup(imageSrc, imageId) {
-            document.getElementById('popupImage').src = imageSrc;
-            document.getElementById('popupImageID').textContent = imageId;
-            document.getElementById('imagePopup').classList.remove('hidden');
         }
 
         function sendPostRequest(data, isFileUpload = false) {
@@ -250,6 +232,10 @@
                 })
                 .catch(error => {
                     alert('An error occurred: ' + error.message);
+                })
+                .finally(() => {
+                    isRequesting = false;
+                    hideLoadingPopup();
                 });
         }
 
@@ -298,10 +284,6 @@
                 sendPostRequest(data);
             }
         }
-
-        document.getElementById('closePopupBtn').addEventListener('click', function() {
-            document.getElementById('imagePopup').classList.add('hidden');
-        });
 
         fileInput.addEventListener('change', handleFileUpload);
 
