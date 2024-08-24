@@ -24,6 +24,24 @@
             padding: 10px;
             border-radius: 5px;
         }
+
+        /* Popup styles */
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 16px;
+            display: none;
+        }
+
+        .popup button {
+            margin: 5px;
+        }
     </style>
 </head>
 
@@ -101,6 +119,12 @@
         <div id="imageContainer" class="grid grid-cols-3 gap-4 mt-4"></div>
     </section>
 
+    <!-- Cart Section -->
+    <section id="cartSection" class="container mx-auto py-6">
+        <h3 class="text-lg font-bold text-gray-800">Cart</h3>
+        <div id="cartItems" class="grid grid-cols-3 gap-4 mt-4"></div>
+    </section>
+
     <!-- Loading Popup -->
     <div id="loadingPopup" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white p-4 rounded-lg shadow-lg flex items-center justify-center">
@@ -113,6 +137,24 @@
         Email copied to clipboard!
     </div>
 
+    <!-- Delete Confirmation Popup -->
+    <div id="deletePopup" class="popup">
+        <p class="text-gray-700">이미지를 장바구니에서 삭제하시겠습니까?</p>
+        <div class="mt-4 text-center">
+            <button id="confirmDeleteBtn" class="text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg">확인</button>
+            <button id="cancelDeleteBtn" class="text-gray-600 border border-gray-300 px-4 py-2 rounded-lg">취소</button>
+        </div>
+    </div>
+
+    <!-- Add to Cart Confirmation Popup -->
+    <div id="addToCartPopup" class="popup">
+        <p class="text-gray-700">이미지를 장바구니에 추가하시겠습니까?</p>
+        <div class="mt-4 text-center">
+            <button id="confirmAddToCartBtn" class="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">확인</button>
+            <button id="cancelAddToCartBtn" class="text-gray-600 border border-gray-300 px-4 py-2 rounded-lg">취소</button>
+        </div>
+    </div>
+
     <script>
         const getStartedBtn = document.getElementById('getStartedBtn');
         const searchInput = document.getElementById('searchInput');
@@ -120,9 +162,18 @@
         const uploadBtn = document.getElementById('uploadBtn');
         const dropArea = document.getElementById('dropArea');
         const imageContainer = document.getElementById('imageContainer');
+        const cartItems = document.getElementById('cartItems');
         const clearInputBtn = document.getElementById('clearInputBtn');
+        const deletePopup = document.getElementById('deletePopup');
+        const addToCartPopup = document.getElementById('addToCartPopup');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmAddToCartBtn = document.getElementById('confirmAddToCartBtn');
+        const cancelAddToCartBtn = document.getElementById('cancelAddToCartBtn');
         let isRequesting = false;
-    
+        let imageToDelete = null;
+        let imageToAdd = null;
+
         function toggleGetStartedButton() {
             const isEnabled = searchInput.value.trim().length > 0;
             getStartedBtn.disabled = !isEnabled;
@@ -132,21 +183,21 @@
             getStartedBtn.classList.toggle('cursor-not-allowed', !isEnabled);
             getStartedBtn.classList.toggle('cursor-pointer', isEnabled);
         }
-    
+
         function showLoadingPopup() {
             document.getElementById('loadingPopup').classList.remove('hidden');
         }
-    
+
         function hideLoadingPopup() {
             document.getElementById('loadingPopup').classList.add('hidden');
         }
-    
+
         function displayImages(imageLinks, imageIds, imageInfos) {
             hideLoadingPopup();
             isRequesting = false;
-    
+
             imageContainer.innerHTML = '';
-    
+
             if (Array.isArray(imageLinks)) {
                 imageLinks.forEach((link, index) => {
                     const imgElement = document.createElement('img');
@@ -155,7 +206,7 @@
                     imgElement.classList.add('w-full', 'h-auto', 'rounded-lg', 'shadow');
                     imgElement.dataset.id = imageIds ? imageIds[index] : '';
                     imgElement.dataset.info = imageInfos ? JSON.stringify(imageInfos[index]) : '';
-                    
+
                     const infoDiv = document.createElement('div');
                     infoDiv.classList.add('image-info');
                     infoDiv.innerHTML = `
@@ -167,40 +218,45 @@
                         <p><strong>Runtime:</strong> ${imageInfos[index]?.runtime || 'N/A'}</p>
                         <p><strong>Age:</strong> ${imageInfos[index]?.age || 'N/A'}</p>
                     `;
-    
-                    imgElement.addEventListener('mouseover', function() {
+
+                    imgElement.addEventListener('mouseover', function () {
                         infoDiv.style.display = 'block';
                     });
-    
-                    imgElement.addEventListener('mouseout', function() {
-                        // Hide infoDiv only if mouse is not over imgElement or infoDiv
+
+                    imgElement.addEventListener('mouseout', function () {
                         setTimeout(() => {
                             if (!imgElement.matches(':hover') && !infoDiv.matches(':hover')) {
                                 infoDiv.style.display = 'none';
                             }
                         }, 100);
                     });
-    
-                    infoDiv.addEventListener('mouseover', function() {
+
+                    infoDiv.addEventListener('mouseover', function () {
                         infoDiv.style.display = 'block';
                     });
-    
-                    infoDiv.addEventListener('mouseout', function() {
-                        // Hide infoDiv only if mouse is not over imgElement or infoDiv
+
+                    infoDiv.addEventListener('mouseout', function () {
                         setTimeout(() => {
                             if (!imgElement.matches(':hover') && !infoDiv.matches(':hover')) {
                                 infoDiv.style.display = 'none';
                             }
                         }, 100);
                     });
-    
+
                     const wrapper = document.createElement('div');
                     wrapper.classList.add('relative');
                     wrapper.appendChild(imgElement);
                     wrapper.appendChild(infoDiv);
+
+                    // Add click event for adding to cart
+                    imgElement.addEventListener('click', function () {
+                        imageToAdd = imgElement;
+                        addToCartPopup.style.display = 'block';
+                    });
+
                     imageContainer.appendChild(wrapper);
                 });
-    
+
                 Promise.all(Array.from(imageContainer.querySelectorAll('img')).map(img => {
                     if (img.complete) return Promise.resolve();
                     return new Promise(resolve => { img.onload = img.onerror = resolve; });
@@ -212,14 +268,34 @@
                 alert('서버에서 잘못된 형식의 응답을 받았습니다.');
             }
         }
-    
+
+        function addImageToCart(image) {
+            const cartImage = image.cloneNode(true);
+            cartImage.classList.remove('shadow');
+            cartImage.classList.add('border-2', 'border-blue-600');
+            cartImage.addEventListener('click', function () {
+                imageToDelete = cartImage;
+                deletePopup.style.display = 'block';
+            });
+            cartItems.appendChild(cartImage);
+        }
+
+        function removeImageFromCart(imageId) {
+            const images = cartItems.querySelectorAll('img');
+            images.forEach(img => {
+                if (img.dataset.id === imageId) {
+                    img.remove();
+                }
+            });
+        }
+
         function sendPostRequest(data, isFileUpload = false) {
             const options = {
                 method: 'POST',
                 headers: isFileUpload ? {} : { 'Content-Type': 'application/json' },
                 body: isFileUpload ? data : JSON.stringify(data)
             };
-    
+
             fetch('/process', options)
                 .then(response => response.json())
                 .then(result => {
@@ -238,8 +314,8 @@
                     hideLoadingPopup();
                 });
         }
-    
-        document.getElementById('copyButton').addEventListener('click', function(event) {
+
+        document.getElementById('copyButton').addEventListener('click', function (event) {
             const emailText = document.getElementById('emailText').innerText;
             navigator.clipboard.writeText(emailText).then(() => {
                 const copyButton = event.target;
@@ -255,9 +331,9 @@
                 console.error('Could not copy text: ', err);
             });
         });
-    
+
         document.querySelectorAll('.example-text').forEach(box => {
-            box.addEventListener('click', function() {
+            box.addEventListener('click', function () {
                 searchInput.value = this.querySelector('span').textContent.trim();
                 toggleGetStartedButton();
                 if (!getStartedBtn.disabled) {
@@ -265,7 +341,7 @@
                 }
             });
         });
-    
+
         function handleFileUpload() {
             if (fileInput.files.length && !isRequesting) {
                 isRequesting = true;
@@ -275,7 +351,7 @@
                 sendPostRequest(formData, true);
             }
         }
-    
+
         function handleGetStarted() {
             if (searchInput.value.trim() && !isRequesting) {
                 isRequesting = true;
@@ -284,22 +360,22 @@
                 sendPostRequest(data);
             }
         }
-    
+
         fileInput.addEventListener('change', handleFileUpload);
-    
-        uploadBtn.addEventListener('click', function() {
+
+        uploadBtn.addEventListener('click', function () {
             fileInput.click();
         });
-    
+
         dropArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             dropArea.classList.add('border-blue-600');
         });
-    
+
         dropArea.addEventListener('dragleave', () => {
             dropArea.classList.remove('border-blue-600');
         });
-    
+
         dropArea.addEventListener('drop', (e) => {
             e.preventDefault();
             dropArea.classList.remove('border-blue-600');
@@ -308,30 +384,43 @@
                 handleFileUpload();
             }
         });
-    
+
         getStartedBtn.addEventListener('click', handleGetStarted);
-    
-        searchInput.addEventListener('input', function() {
-            toggleGetStartedButton();
-            clearInputBtn.style.display = this.value ? 'block' : 'none';
-        });
-    
-        clearInputBtn.addEventListener('click', function() {
+
+        searchInput.addEventListener('input', toggleGetStartedButton);
+
+        clearInputBtn.addEventListener('click', function () {
             searchInput.value = '';
-            clearInputBtn.style.display = 'none';
             toggleGetStartedButton();
         });
-    
-        // Add event listener for Enter key
-        searchInput.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault(); // Prevent the default action (form submission if inside a form)
-                if (!getStartedBtn.disabled) {
-                    handleGetStarted();
-                }
+
+        confirmDeleteBtn.addEventListener('click', function () {
+            if (imageToDelete) {
+                removeImageFromCart(imageToDelete.dataset.id);
+                imageToDelete.remove();
+                deletePopup.style.display = 'none';
+                imageToDelete = null;
             }
         });
-    </script>    
+
+        cancelDeleteBtn.addEventListener('click', function () {
+            deletePopup.style.display = 'none';
+            imageToDelete = null;
+        });
+
+        confirmAddToCartBtn.addEventListener('click', function () {
+            if (imageToAdd) {
+                addImageToCart(imageToAdd);
+                addToCartPopup.style.display = 'none';
+                imageToAdd = null;
+            }
+        });
+
+        cancelAddToCartBtn.addEventListener('click', function () {
+            addToCartPopup.style.display = 'none';
+            imageToAdd = null;
+        });
+    </script>
 </body>
 
 </html>
