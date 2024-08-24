@@ -6,6 +6,7 @@ import os
 from FAISS import load_faiss_index, find_similar_images, get_image_urls_from_db
 from PIL import Image
 import io
+from datetime import date
 
 app = Flask(__name__)
 clip = CLIP()
@@ -38,6 +39,35 @@ def translate_text(text, src='ko', dest='en'):
 def allowed_file(filename):
     # 파일이 허용된 유형인지 확인 (예: .jpg, .png, .gif)
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'jpg', 'jpeg', 'png', 'gif'}
+
+def get_info(image_ids, cursor):
+    try:
+        # Convert image_ids to a format suitable for SQL IN clause
+        ids_placeholder = ', '.join(['%s'] * len(image_ids))
+
+        # SQL query to fetch the required information
+        query = f"SELECT ID, image_id, start_date, end_date, place_name, actor, runtime, age FROM images_info WHERE ID IN ({ids_placeholder})"
+        
+        # Execute the query with the image_ids as parameters
+        cursor.execute(query, image_ids)
+        
+        # Fetch all the results
+        results = cursor.fetchall()
+        
+        # Process results into a list of dictionaries
+        image_info = []
+        for row in results:
+            info = {'ID': row[0], 'image_id': row[1],
+                    'start_date': str(row[2].isoformat()) if isinstance(row[2], date) else row[2],
+                    'end_date': str(row[3].isoformat()) if isinstance(row[3], date) else row[3],
+                    'place_name': row[4], 'actor': row[5], 'runtime': row[6], 'age': row[7]}
+            image_info.append(info)
+        
+    except Exception as e:
+        print(f"An error occurred while fetching image info: {e}")
+        image_info = []
+
+    return image_info
 
 @app.route('/')
 def index():
@@ -74,8 +104,10 @@ def process_input():
             return jsonify({'error': '유효한 입력이 제공되지 않았습니다'}), 400
 
         image_id_url, distances = process_embedding(embedding, db_connection, cursor)
-        # print(image_id_url)
-        return jsonify({'image_links': list(image_id_url.values()), 'embedding': embedding.cpu().tolist()})
+        distances = distances.tolist()
+        image_info = get_info(list(image_id_url.keys()), cursor)
+        # return jsonify({'image_ids': list(image_id_url.keys()), 'image_links': list(image_id_url.values()), 'image_info': image_info, 'distances': distances})
+        return jsonify({'image_ids': list(image_id_url.keys()), 'image_links': list(image_id_url.values()), 'image_info': image_info})
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500

@@ -33,7 +33,7 @@ try:
         rows = cursor.fetchall()
         
         # 결과 출력
-        print(f"Table: {table_name}, Columns: {column_names}, Total Count: {count}, Top 6 Rows: {rows}")
+        print(f"Table: {table_name}, Columns: {column_names}, Total Count: {count}, Top 6 Rows: {rows if table_name != 'images_features' else None}")
 
 except mysql.connector.Error as err:
     print(f"Error: {err}")
