@@ -54,6 +54,7 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 16px;
             display: none;
+            width: 300px;
         }
 
         .popup button {
@@ -62,6 +63,10 @@
 
         .popup.visible {
             display: block;
+        }
+
+        .popup-message {
+            margin-bottom: 8px;
         }
 
         .image-wrapper.selected {
@@ -88,6 +93,15 @@
 
         .image-wrapper.selected .checkmark {
             display: flex; /* Show the checkmark when selected */
+        }
+
+        /* GeneratePopup의 스타일 */
+        #generatePopup {
+            width: 600px; /* 원하는 너비 */
+            max-width: 90vw; /* 화면 너비의 90%를 초과하지 않도록 설정 */
+            height: auto; /* 내용에 맞춰 높이 자동 조절 */
+            max-height: 90vh; /* 화면 높이의 80%를 초과하지 않도록 설정 */
+            overflow: auto; /* 내용이 넘칠 경우 스크롤 표시 */
         }
     </style>
 </head>
@@ -143,11 +157,19 @@
         <p class="popup-message">👋 포스터가 삭제되었습니다!</p>
     </div>
 
-    <!-- Generate Confirmation Popup -->
+    <!-- Generate New Image Confirmation Popup -->
     <div id="generatePopup" class="popup">
-        <p class="popup-message">🖌 새로운 이미지를 생성하시겠습니까?</p>
+        <p class="popup-message">텍스트를 입력하여 선택한 포스터들로 나만의 이미지를 만드세요!</p>
+        <p class="text-sm text-gray-500 mb-4">예시: 이미지 1에 이미지 2가 가진 색감을 입혀줘.</p>
+        <textarea 
+            id="promptInput" 
+            class="border border-gray-300 rounded-lg px-4 py-2 w-full h-32 resize-none mb-4" 
+            placeholder="생성하고자 하는 이미지 설명을 입력하세요."
+            rows="4"
+        ></textarea>
+        <p class="popup-message">👨‍🎨 새로운 이미지를 생성하시겠습니까?</p>
         <div class="mt-4 text-center">
-            <button id="confirmGenerateBtn" class="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">확인</button>
+            <button id="confirmGenerateBtn" class="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg" disabled>확인</button>
             <button id="cancelGenerateBtn" class="text-gray-600 border border-gray-300 px-4 py-2 rounded-lg">취소</button>
         </div>
     </div>
@@ -165,6 +187,28 @@
         const generatePopup = document.getElementById('generatePopup');
         const confirmGenerateBtn = document.getElementById('confirmGenerateBtn');
         const cancelGenerateBtn = document.getElementById('cancelGenerateBtn');
+        const promptInput = document.getElementById('promptInput');
+
+        // 텍스트 입력란의 입력이 변경될 때 버튼의 활성화 상태를 업데이트합니다
+        function updateGenerateButtonState() {
+            if (promptInput.value.trim() === '') {
+                // 텍스트 입력란이 비어 있는 경우 버튼을 비활성화
+                confirmGenerateBtn.disabled = true;
+                // 클래스 업데이트: 비활성화된 상태의 스타일 적용
+                confirmGenerateBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                confirmGenerateBtn.classList.add('bg-gray-500', 'hover:bg-gray-500');
+                confirmGenerateBtn.style.cursor = 'not-allowed'; // 커서를 'not-allowed'로 변경
+            } else {
+                // 텍스트 입력란에 내용이 있는 경우 버튼을 활성화
+                confirmGenerateBtn.disabled = false;
+                // 클래스 업데이트: 활성화된 상태의 스타일 적용
+                confirmGenerateBtn.classList.remove('bg-gray-500', 'hover:bg-gray-500');
+                confirmGenerateBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                confirmGenerateBtn.style.cursor = 'pointer'; // 커서를 'pointer'로 변경
+            }
+        }
+
+        promptInput.addEventListener('input', updateGenerateButtonState);
 
         // 팝업을 표시하는 함수
         function showDeletePopup(id) {
@@ -172,9 +216,17 @@
             deletePopup.classList.add('visible');
         }
 
+        function showGeneratePopup() {
+            generatePopup.classList.add('visible');
+        }
+
         // 팝업을 숨기는 함수
         function hideDeletePopup() {
             deletePopup.classList.remove('visible');
+        }
+
+        function hideGeneratePopup() {
+            generatePopup.classList.remove('visible');
         }
 
         // 삭제 완료 메시지 팝업 표시 함수
@@ -200,8 +252,8 @@
         });
 
         // Generate 버튼 클릭 시 팝업 표시
-        generateButton.addEventListener('click', function() {
-            generatePopup.classList.add('visible');
+        generateButton.addEventListener('click', () => {
+            showGeneratePopup(); // 팝업 표시
         });
 
         function removeFromCart(id) {
@@ -240,19 +292,20 @@
         function toggleGenerateButton() {
             if (selectedItems.length > 0) {
                 generateButton.disabled = false;
-                generateButton.classList.remove('bg-gray-400');
-                generateButton.classList.add('bg-blue-600');
-                generateButton.classList.remove('cursor-not-allowed');
+                // 클래스 업데이트: 활성화된 상태의 스타일 적용
+                generateButton.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                generateButton.classList.add('bg-blue-600', 'cursor-pointer');
             } else {
                 generateButton.disabled = true;
-                generateButton.classList.remove('bg-blue-600');
-                generateButton.classList.add('bg-gray-400');
-                generateButton.classList.add('cursor-not-allowed');
+                // 클래스 업데이트: 비활성화된 상태의 스타일 적용
+                generateButton.classList.remove('bg-blue-600', 'cursor-pointer');
+                generateButton.classList.add('bg-gray-400', 'cursor-not-allowed');
             }
         }
 
         // Generate 확인 버튼 클릭 시 요청 보내기
-        confirmGenerateBtn.addEventListener('click', function() {
+        confirmGenerateBtn.addEventListener('click', () => {
+            const promptText = document.getElementById('promptInput').value;
             const selectedIds = selectedItems.map(item => item.id);
 
             fetch('/generate', {
@@ -260,25 +313,30 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ selectedItems: selectedIds })
+                body: JSON.stringify({ prompt: promptText, selectedItems: selectedIds })
             })
             .then(response => response.json())
             .then(data => {
                 console.log('Success:', data);
+                hideGeneratePopup(); // 팝업 숨기기
                 // 요청 성공 시 추가 작업을 여기에 작성할 수 있습니다.
             })
             .catch((error) => {
                 console.error('Error:', error);
                 // 에러 처리
             });
-
-            generatePopup.classList.remove('visible'); // 팝업 닫기
         });
 
         // Generate 취소 버튼 클릭 시 팝업 숨기기
         cancelGenerateBtn.addEventListener('click', function() {
-            generatePopup.classList.remove('visible');
+            hideGeneratePopup();
         });
+
+        // 페이지 로드 시 장바구니 아이템 표시
+        window.onload = () => {
+            displayCartItems();
+            updateGenerateButtonState(); // 페이지 로드 시 버튼 상태 초기화
+        };
 
         function displayCartItems() {
             const cartItems = document.getElementById('cartItems');
@@ -342,9 +400,6 @@
                 });
             });
         }
-
-        // 페이지 로드 시 장바구니 아이템 표시
-        window.onload = displayCartItems;
     </script>
 </body>
 

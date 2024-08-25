@@ -123,15 +123,17 @@ def process_input():
 def generate():
     data = request.get_json()  # JSON 형식으로 데이터를 받아옵니다.
     
-    # 'selectedItems'가 POST 데이터에 포함되어 있는지 확인합니다.
-    if 'selectedItems' in data and isinstance(data['selectedItems'], list):
+    # 'prompt'와 'selectedItems'가 POST 데이터에 포함되어 있는지 확인합니다.
+    if 'prompt' in data and isinstance(data['prompt'], str) and 'selectedItems' in data and isinstance(data['selectedItems'], list):
+        prompt = data['prompt']
         selected_items = data['selectedItems']
         
         # 작업 수행
-
+        # 예: print(prompt) 또는 다른 처리 작업
+        
         return jsonify({'success': 'Success'}), 200  # 성공 메시지 반환
     else:
-        return jsonify({'error': 'No valid items provided'}), 400  # 에러 메시지 반환
+        return jsonify({'error': 'Invalid input'}), 400  # 에러 메시지 반환
 
 @app.errorhandler(400)
 def bad_request(error):
