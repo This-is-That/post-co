@@ -7,21 +7,67 @@
     <title>Cart - Similarity Analytics Web Service</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     <style>
+        .image-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(255, 0, 0, 0.8);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 20;
+            display: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .remove-btn:hover {
+            background-color: rgba(255, 0, 0, 1);
+        }
+
         .image-info {
             display: none;
             background-color: #f9f9f9;
             border: 1px solid #ddd;
             padding: 10px;
-            border-radius: 5px;
-            position: absolute; /* Ensure the info div is positioned correctly */
-            top: 100%; /* Position it below the image */
-            left: 0;
-            z-index: 10;
+            border-radius: 0 0 5px 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 16px;
+            display: none;
+        }
+
+        .popup button {
+            margin: 5px;
+        }
+
+        .popup.visible {
+            display: block;
         }
     </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen flex flex-col">
+
     <!-- Header Section -->
     <header class="bg-white shadow w-full">
         <div class="container mx-auto flex justify-between items-center" style="height: 120px;">
@@ -52,7 +98,69 @@
         <div id="cartItems" class="grid grid-cols-3 gap-4"></div>
     </main>
 
+    <!-- Delete Confirmation Popup -->
+    <div id="deletePopup" class="popup">
+        <p class="popup-message">이 포스터를 삭제하시겠습니까?</p>
+        <div class="mt-4 text-center">
+            <button id="confirmDeleteBtn" class="text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg">확인</button>
+            <button id="cancelDeleteBtn" class="text-gray-600 border border-gray-300 px-4 py-2 rounded-lg">취소</button>
+        </div>
+    </div>
+
+    <!-- Image Removed Popup -->
+    <div id="imageRemovedPopup" class="popup">
+        <p class="popup-message">👋 포스터가 삭제되었습니다!</p>
+    </div>
+
     <script>
+        let imageIdToRemove = null; // 삭제할 이미지 ID를 저장할 변수
+
+        // 팝업 요소와 버튼을 가져옵니다
+        const deletePopup = document.getElementById('deletePopup');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const imageRemovedPopup = document.getElementById('imageRemovedPopup');
+
+        // 팝업을 표시하는 함수
+        function showDeletePopup(id) {
+            imageIdToRemove = id;
+            deletePopup.classList.add('visible');
+        }
+
+        // 팝업을 숨기는 함수
+        function hideDeletePopup() {
+            deletePopup.classList.remove('visible');
+        }
+
+        // 삭제 완료 메시지 팝업 표시 함수
+        function showImageRemovedPopup() {
+            imageRemovedPopup.classList.add('visible');
+            setTimeout(() => {
+                imageRemovedPopup.classList.remove('visible');
+            }, 1500); // 1.5초 동안 표시
+        }
+
+        // 확인 버튼 클릭 시 이미지 삭제
+        confirmDeleteBtn.addEventListener('click', function() {
+            if (imageIdToRemove !== null) {
+                removeFromCart(imageIdToRemove);
+                hideDeletePopup();
+                showImageRemovedPopup(); // 삭제 완료 메시지 표시
+            }
+        });
+
+        // 취소 버튼 클릭 시 팝업 숨기기
+        cancelDeleteBtn.addEventListener('click', function() {
+            hideDeletePopup();
+        });
+
+        function removeFromCart(id) {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            cart = cart.filter(item => item.id !== id);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            displayCartItems();
+        }
+
         function displayCartItems() {
             const cartItems = document.getElementById('cartItems');
             const cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -61,12 +169,12 @@
 
             cart.forEach(item => {
                 const wrapper = document.createElement('div');
-                wrapper.classList.add('relative', 'group'); // Added 'group' class for the hover effect
+                wrapper.classList.add('image-wrapper');
 
                 const imgElement = document.createElement('img');
                 imgElement.src = item.src;
                 imgElement.alt = 'Cart Item';
-                imgElement.classList.add('w-full', 'h-auto', 'rounded-lg', 'shadow');
+                imgElement.classList.add('w-full', 'h-auto', 'rounded-t-lg', 'shadow');
                 imgElement.dataset.id = item.id;
 
                 const infoDiv = document.createElement('div');
@@ -82,9 +190,9 @@
                 `;
 
                 const removeBtn = document.createElement('button');
-                removeBtn.textContent = 'Remove';
-                removeBtn.classList.add('mt-2', 'px-4', 'py-2', 'bg-red-500', 'text-white', 'rounded');
-                removeBtn.onclick = () => removeFromCart(item.id);
+                removeBtn.textContent = 'X';
+                removeBtn.classList.add('remove-btn');
+                removeBtn.onclick = () => showDeletePopup(item.id);
 
                 wrapper.appendChild(imgElement);
                 wrapper.appendChild(infoDiv);
@@ -92,27 +200,20 @@
 
                 cartItems.appendChild(wrapper);
 
-                // 이미지와 infoDiv를 감싸는 요소에 대해 hover 상태 유지
                 wrapper.addEventListener('mouseover', () => {
+                    removeBtn.style.display = 'block';
                     infoDiv.style.display = 'block';
                 });
 
                 wrapper.addEventListener('mouseout', () => {
-                    // 커서가 이미지와 infoDiv 모두에서 벗어날 때만 infoDiv 숨기기
                     setTimeout(() => {
-                        if (!wrapper.matches(':hover') && !infoDiv.matches(':hover')) {
+                        if (!wrapper.matches(':hover')) {
+                            removeBtn.style.display = 'none';
                             infoDiv.style.display = 'none';
                         }
                     }, 100);
                 });
             });
-        }
-
-        function removeFromCart(id) {
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
-            cart = cart.filter(item => item.id !== id);
-            localStorage.setItem('cart', JSON.stringify(cart));
-            displayCartItems();
         }
 
         // 페이지 로드 시 장바구니 아이템 표시
