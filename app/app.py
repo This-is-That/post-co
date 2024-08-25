@@ -119,6 +119,20 @@ def process_input():
         cursor.close()
         db_connection.close()
 
+@app.route('/generate', methods=['POST'])
+def generate():
+    data = request.get_json()  # JSON 형식으로 데이터를 받아옵니다.
+    
+    # 'selectedItems'가 POST 데이터에 포함되어 있는지 확인합니다.
+    if 'selectedItems' in data and isinstance(data['selectedItems'], list):
+        selected_items = data['selectedItems']
+        
+        # 작업 수행
+
+        return jsonify({'success': 'Success'}), 200  # 성공 메시지 반환
+    else:
+        return jsonify({'error': 'No valid items provided'}), 400  # 에러 메시지 반환
+
 @app.errorhandler(400)
 def bad_request(error):
     return jsonify({'error': 'Bad Request'}), 400

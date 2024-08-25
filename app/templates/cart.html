@@ -120,7 +120,12 @@
 
     <!-- Main Section -->
     <main class="flex-grow container mx-auto py-6">
-        <h1 class="text-2xl font-bold text-gray-900 mb-6">Your Cart</h1>
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">Your Cart</h1>
+            <button id="generateButton" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50" disabled>
+                Generate New Image!
+            </button>
+        </div>
         <div id="cartItems" class="grid grid-cols-3 gap-4"></div>
     </main>
 
@@ -138,6 +143,15 @@
         <p class="popup-message">👋 포스터가 삭제되었습니다!</p>
     </div>
 
+    <!-- Generate Confirmation Popup -->
+    <div id="generatePopup" class="popup">
+        <p class="popup-message">🖌 새로운 이미지를 생성하시겠습니까?</p>
+        <div class="mt-4 text-center">
+            <button id="confirmGenerateBtn" class="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">확인</button>
+            <button id="cancelGenerateBtn" class="text-gray-600 border border-gray-300 px-4 py-2 rounded-lg">취소</button>
+        </div>
+    </div>
+
     <script>
         let imageIdToRemove = null; // 삭제할 이미지 ID를 저장할 변수
         let selectedItems = []; // 선택된 항목들을 추적할 배열
@@ -147,6 +161,10 @@
         const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
         const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
         const imageRemovedPopup = document.getElementById('imageRemovedPopup');
+        const generateButton = document.getElementById('generateButton');
+        const generatePopup = document.getElementById('generatePopup');
+        const confirmGenerateBtn = document.getElementById('confirmGenerateBtn');
+        const cancelGenerateBtn = document.getElementById('cancelGenerateBtn');
 
         // 팝업을 표시하는 함수
         function showDeletePopup(id) {
@@ -181,6 +199,11 @@
             hideDeletePopup();
         });
 
+        // Generate 버튼 클릭 시 팝업 표시
+        generateButton.addEventListener('click', function() {
+            generatePopup.classList.add('visible');
+        });
+
         function removeFromCart(id) {
             let cart = JSON.parse(localStorage.getItem('cart')) || [];
             cart = cart.filter(item => item.id !== id);
@@ -205,6 +228,7 @@
             }
 
             updateSelectionOrder();
+            toggleGenerateButton(); // 선택 상태 변경 시 버튼 활성화 상태도 업데이트
         }
 
         function updateSelectionOrder() {
@@ -213,12 +237,56 @@
             });
         }
 
+        function toggleGenerateButton() {
+            if (selectedItems.length > 0) {
+                generateButton.disabled = false;
+                generateButton.classList.remove('bg-gray-400');
+                generateButton.classList.add('bg-blue-600');
+                generateButton.classList.remove('cursor-not-allowed');
+            } else {
+                generateButton.disabled = true;
+                generateButton.classList.remove('bg-blue-600');
+                generateButton.classList.add('bg-gray-400');
+                generateButton.classList.add('cursor-not-allowed');
+            }
+        }
+
+        // Generate 확인 버튼 클릭 시 요청 보내기
+        confirmGenerateBtn.addEventListener('click', function() {
+            const selectedIds = selectedItems.map(item => item.id);
+
+            fetch('/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ selectedItems: selectedIds })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                // 요청 성공 시 추가 작업을 여기에 작성할 수 있습니다.
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                // 에러 처리
+            });
+
+            generatePopup.classList.remove('visible'); // 팝업 닫기
+        });
+
+        // Generate 취소 버튼 클릭 시 팝업 숨기기
+        cancelGenerateBtn.addEventListener('click', function() {
+            generatePopup.classList.remove('visible');
+        });
+
         function displayCartItems() {
             const cartItems = document.getElementById('cartItems');
             const cart = JSON.parse(localStorage.getItem('cart')) || [];
 
             cartItems.innerHTML = '';
             selectedItems = []; // 초기화
+            toggleGenerateButton(); // 초기화 시 버튼 상태도 초기화
 
             cart.forEach(item => {
                 const wrapper = document.createElement('div');
