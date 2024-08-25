@@ -142,7 +142,7 @@
 
     <!-- Delete Confirmation Popup -->
     <div id="deletePopup" class="popup">
-        <p class="text-gray-700">이 이미지는 이미 장바구니에 있습니다. 이미지를 장바구니에서 삭제하시겠습니까?</p>
+        <p class="text-gray-700">이 포스터는 이미 장바구니에 있습니다. 포스터를 장바구니에서 삭제하시겠습니까?</p>
         <div class="mt-4 text-center">
             <button id="confirmDeleteBtn" class="text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg">확인</button>
             <button id="cancelDeleteBtn" class="text-gray-600 border border-gray-300 px-4 py-2 rounded-lg">취소</button>
@@ -151,7 +151,7 @@
 
     <!-- Add to Cart Confirmation Popup -->
     <div id="addToCartPopup" class="popup">
-        <p class="text-gray-700">이미지를 장바구니에 추가하시겠습니까?</p>
+        <p class="text-gray-700">🖼 선택한 포스터를 장바구니에 추가하시겠습니까?</p>
         <div class="mt-4 text-center">
             <button id="confirmAddToCartBtn" class="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">확인</button>
             <button id="cancelAddToCartBtn" class="text-gray-600 border border-gray-300 px-4 py-2 rounded-lg">취소</button>
@@ -159,8 +159,10 @@
     </div>
 
     <!-- Add these elements to your HTML -->
-    <div id="imageAddedPopup" class="popup hidden">이미지가 장바구니에 추가되었습니다!</div>
-    <div id="imageExistsPopup" class="popup hidden">이 이미지는 이미 장바구니에 있습니다.</div>
+    <div id="imageAddedPopup" class="popup hidden">🛒 포스터가 장바구니에 추가되었습니다!</div>
+    <div id="imageRemovedPopup" class="popup">
+        <p class="popup-message">👋 포스터가 장바구니에서 삭제되었습니다!</p>
+    </div>
 
     <script>
         const getStartedBtn = document.getElementById('getStartedBtn');
@@ -296,9 +298,25 @@
                 });
 
                 localStorage.setItem('cart', JSON.stringify(cart));
-                showPopup('이미지가 장바구니에 추가되었습니다!', 'imageAddedPopup');
+                showPopup('🛒 포스터가 장바구니에 추가되었습니다!', 'imageAddedPopup');
             } else {
-                showPopup('이 이미지는 이미 장바구니에 있습니다.', 'imageExistsPopup');
+                deletePopup.classList.add('visible');
+                
+                // 확인 버튼 클릭 시 장바구니에서 포스터 삭제
+                confirmDeleteBtn.addEventListener('click', function() {
+                    // 장바구니에서 포스터 삭제 로직
+                    cart = cart.filter(item => item.id !== imageId);
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                    deletePopup.classList.remove('visible'); // 팝업 숨기기
+
+                    // 삭제 완료 메시지 표시
+                    showPopup('👋 포스터가 장바구니에서 삭제되었습니다!', 'imageRemovedPopup');
+                });
+
+                // 취소 버튼 클릭 시 팝업 숨기기
+                cancelDeleteBtn.addEventListener('click', function() {
+                    deletePopup.classList.remove('visible'); // 팝업 숨기기
+                });
             }
         }
 
