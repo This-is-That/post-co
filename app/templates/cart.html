@@ -88,11 +88,11 @@
             justify-content: center;
             font-size: 16px;
             font-weight: bold;
-            display: none; /* Initially hidden */
+            display: none;
         }
 
         .image-wrapper.selected .checkmark {
-            display: flex; /* Show the checkmark when selected */
+            display: flex;
         }
 
         /* GeneratePopup의 스타일 */
@@ -102,6 +102,22 @@
             height: auto; /* 내용에 맞춰 높이 자동 조절 */
             max-height: 90vh; /* 화면 높이의 80%를 초과하지 않도록 설정 */
             overflow: auto; /* 내용이 넘칠 경우 스크롤 표시 */
+        }
+
+        #genImageSection img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
+        }
+
+        #downloadPopup {
+            width: 300px;
+            max-width: 90vw;
+            height: auto;
+            max-height: 90vh;
+            overflow: auto;
         }
     </style>
 </head>
@@ -141,6 +157,12 @@
             </button>
         </div>
         <div id="cartItems" class="grid grid-cols-3 gap-4"></div>
+
+        <!-- 생성된 이미지 섹션 -->
+        <section id="genImageSection" class="hidden">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Generated Images</h2>
+            <div id="generatedImages" class="grid grid-cols-3 gap-4"></div>
+        </section>
     </main>
 
     <!-- Delete Confirmation Popup -->
@@ -173,6 +195,34 @@
             <button id="cancelGenerateBtn" class="text-gray-600 border border-gray-300 px-4 py-2 rounded-lg">취소</button>
         </div>
     </div>
+
+    <!-- Download Confirmation Popup -->
+    <div id="downloadPopup" class="popup">
+        <p class="popup-message">포스터를 다운로드 하시겠습니까?</p>
+        <div class="mt-4 text-center">
+            <button id="confirmDownloadBtn" class="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">확인</button>
+            <button id="cancelDownloadBtn" class="text-gray-600 border border-gray-300 px-4 py-2 rounded-lg">취소</button>
+        </div>
+    </div>
+
+    <!-- Download Success Popup -->
+    <div id="downloadSuccessPopup" class="popup">
+        <p class="popup-message">다운로드를 시작합니다.<br>다운로드 폴더를 확인해주세요!</p>
+    </div>
+
+    <!-- Generate Loading Popup -->
+    <div id="loadingPopup" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white p-4 rounded-lg shadow-lg flex items-center justify-center">
+            <img src="{{ url_for('static', filename='images/loading.gif') }}" alt="Loading" class="h-48 w-48">
+        </div>
+    </div>
+
+    <!-- Footer Section -->
+    <footer class="bg-white py-4 shadow mt-auto">
+        <div class="container mx-auto text-center text-gray-500">
+            &copy; 2024 This-is-That All rights reserved.
+        </div>
+    </footer>
 
     <script>
         let imageIdToRemove = null; // 삭제할 이미지 ID를 저장할 변수
@@ -308,8 +358,11 @@
             const promptText = document.getElementById('promptInput').value;
             const selectedItemsData = selectedItems.map(item => ({
                 id: item.id,
-                url: item.element.querySelector('img').src // 포스터 URL 추가
+                url: item.element.querySelector('img').src
             }));
+
+            hideGeneratePopup(); // 생성 팝업 숨기기
+            showLoadingPopup(); // 로딩 팝업 표시
 
             fetch('/generate', {
                 method: 'POST',
@@ -321,12 +374,16 @@
             .then(response => response.json())
             .then(data => {
                 console.log('Success:', data);
-                hideGeneratePopup(); // 팝업 숨기기
-                // 요청 성공 시 추가 작업을 여기에 작성할 수 있습니다.
+                hideLoadingPopup(); // 로딩 팝업 숨기기
+
+                if (data && data.gen_image_urls) {
+                    displayGeneratedImages(data.gen_image_urls);
+                }
             })
             .catch((error) => {
                 console.error('Error:', error);
-                // 에러 처리
+                hideLoadingPopup(); // 에러 발생 시에도 로딩 팝업 숨기기
+                // 에러 처리 (예: 에러 메시지 표시)
             });
         });
 
@@ -402,6 +459,86 @@
                     }, 100);
                 });
             });
+        }
+
+        // 이미지 섹션을 표시하는 함수
+        function displayGeneratedImages(imageUrls) {
+            const genImageSection = document.getElementById('genImageSection');
+            const generatedImages = document.getElementById('generatedImages');
+            generatedImages.innerHTML = ''; // 기존 이미지 제거
+
+            if (imageUrls && imageUrls.length > 0) {
+                imageUrls.forEach((url, index) => {
+                    const wrapper = document.createElement('div');
+                    wrapper.classList.add('image-wrapper');
+
+                    const imgElement = document.createElement('img');
+                    imgElement.src = url;
+                    imgElement.alt = `Generated Image ${index + 1}`;
+
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.textContent = 'Download';
+                    downloadBtn.classList.add('mt-2', 'bg-blue-600', 'text-white', 'px-4', 'py-2', 'rounded-lg', 'hover:bg-blue-700');
+                    downloadBtn.onclick = () => showDownloadPopup(url);
+
+                    wrapper.appendChild(imgElement);
+                    wrapper.appendChild(downloadBtn);
+                    generatedImages.appendChild(wrapper);
+                });
+
+                genImageSection.classList.remove('hidden');
+                genImageSection.style.display = 'block';
+            } else {
+                genImageSection.classList.add('hidden');
+                genImageSection.style.display = 'none';
+            }
+        }
+
+        // 다운로드 팝업 보여주기
+        function showDownloadPopup(url) {
+            const downloadPopup = document.getElementById('downloadPopup');
+            downloadPopup.classList.add('visible');
+
+            const confirmDownloadBtn = document.getElementById('confirmDownloadBtn');
+            confirmDownloadBtn.onclick = () => {
+                downloadImage(url);
+                downloadPopup.classList.remove('visible');
+                showDownloadSuccessPopup();
+            };
+
+            const cancelDownloadBtn = document.getElementById('cancelDownloadBtn');
+            cancelDownloadBtn.onclick = () => {
+                downloadPopup.classList.remove('visible');
+            };
+        }
+
+        // 이미지 다운로드 성공 팝업
+        function showDownloadSuccessPopup() {
+            const downloadSuccessPopup = document.getElementById('downloadSuccessPopup');
+            downloadSuccessPopup.classList.add('visible');
+
+            setTimeout(() => {
+                downloadSuccessPopup.classList.remove('visible');
+            }, 2000); // 2초 후에 팝업 숨기기
+        }
+
+        function showLoadingPopup() {
+            document.getElementById('loadingPopup').classList.remove('hidden');
+        }
+
+        function hideLoadingPopup() {
+            document.getElementById('loadingPopup').classList.add('hidden');
+        }
+
+        // 이미지 다운로드 함수
+        function downloadImage(url) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = url.split('/').pop(); // 파일 이름 설정
+            link.target = '_blank'; // 새 창에서 열기
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     </script>
 </body>

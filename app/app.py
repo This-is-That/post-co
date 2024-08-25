@@ -133,7 +133,8 @@ def generate():
         # 작업 수행
         # 예: print(prompt) 또는 다른 처리 작업
         
-        return jsonify({'success': 'Success'}), 200  # 성공 메시지 반환
+        return jsonify({'gen_image_urls': ['http://www.kopis.or.kr/upload/pfmPoster/PF_PF150653_190702_141854.gif', 
+                                           'http://www.kopis.or.kr/upload/pfmPoster/PF_PF165313_200629_095950.gif',]}), 200  # 성공 메시지 반환
     else:
         return jsonify({'error': 'Invalid input'}), 400  # 에러 메시지 반환
 
