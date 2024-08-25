@@ -532,13 +532,35 @@
 
         // 이미지 다운로드 함수
         function downloadImage(url) {
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = url.split('/').pop(); // 파일 이름 설정
-            link.target = '_blank'; // 새 창에서 열기
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            fetch(url, { method: 'GET', mode: 'cors' }) // mode: 'cors'로 CORS 요청을 시도
+                .then(response => {
+                    if (response.ok) {
+                        // CORS 오류가 없을 경우, Blob을 사용하여 다운로드 처리
+                        return response.blob();
+                    } else {
+                        // CORS 오류 외에 다른 HTTP 오류가 발생할 경우 처리
+                        throw new Error('Network response was not ok.');
+                    }
+                })
+                .then(blob => {
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = url.split('/').pop(); // 파일 이름 설정
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                })
+                .catch(error => {
+                    console.error('Download failed:', error);
+                    // CORS 오류 또는 기타 오류 발생 시, 다운로드 링크를 새 창에서 열기
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = url.split('/').pop(); // 파일 이름 설정
+                    link.target = '_blank'; // 새 창에서 열기
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
         }
     </script>
 </body>
