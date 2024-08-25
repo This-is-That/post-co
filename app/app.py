@@ -74,6 +74,10 @@ def index():
     # Render the index.html template from the templates folder
     return render_template('index.html')
 
+@app.route('/cart')
+def cart():
+    return render_template('cart.html')
+
 @app.route('/process', methods=['POST'])
 def process_input():
     db_connection = mysql.connector.connect(
@@ -106,7 +110,6 @@ def process_input():
         image_id_url, distances = process_embedding(embedding, db_connection, cursor)
         distances = distances.tolist()
         image_info = get_info(list(image_id_url.keys()), cursor)
-        # return jsonify({'image_ids': list(image_id_url.keys()), 'image_links': list(image_id_url.values()), 'image_info': image_info, 'distances': distances})
         return jsonify({'image_ids': list(image_id_url.keys()), 'image_links': list(image_id_url.values()), 'image_info': image_info})
     
     except Exception as e:
