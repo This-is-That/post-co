@@ -24,6 +24,32 @@
             padding: 10px;
             border-radius: 5px;
         }
+
+        /* Popup styles */
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 16px;
+            display: none;
+        }
+
+        .popup button {
+            margin: 5px;
+        }
+
+        .popup.hidden {
+            display: none;
+        }
+
+        .popup.visible {
+            display: block;
+        }
     </style>
 </head>
 
@@ -31,12 +57,13 @@
     <!-- Header Section -->
     <header class="bg-white shadow w-full">
         <div class="container mx-auto flex justify-between items-center" style="height: 120px;">
-            <a href="https://www.kopis.or.kr" target="_blank">
+            <a href="{{ url_for('index') }}">
                 <img src="{{ url_for('static', filename='images/kopis.gif') }}" alt="KOPIS" style="height: 45px; width: auto;">
             </a>
             <nav class="flex space-x-8 text-gray-700 relative">
-                <a href="https://www.kopis.or.kr" target="_blank" class="hover:text-blue-600">HOME</a>
+                <a href="{{ url_for('index') }}" class="hover:text-blue-600">HOME</a>
                 <a href="https://github.com/This-is-That/poster-copycatch" target="_blank" class="hover:text-blue-600">ABOUT</a>
+                <a href="{{ url_for('cart') }}" class="hover:text-blue-600">CART</a>
                 <div class="relative group">
                     <a href="#" class="hover:text-blue-600">CONTACT</a>
                     <div class="absolute hidden group-hover:flex flex-col items-center bg-white border border-gray-300 shadow-lg p-4 rounded-lg" style="width: 250px; left: 50%; transform: translateX(-50%); top: 100%;">
@@ -108,18 +135,33 @@
         </div>
     </div>
 
-    <!-- Image Popup -->
-    <div id="imagePopup" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
-        <div class="bg-white p-4 rounded-lg shadow-lg relative max-w-sm w-full">
-            <button id="closePopupBtn" class="absolute top-2 right-2 text-gray-600 hover:text-gray-800">✕</button>
-            <img id="popupImage" class="w-full h-auto rounded-lg mb-4" src="" alt="Selected Image">
-            <p class="text-gray-800"><strong>ID:</strong> <span id="popupImageID"></span></p>
-        </div>
-    </div>
-
     <!-- Temporary Popup for Email Copy Confirmation -->
     <div id="copyPopup" class="fixed hidden bg-blue-600 text-white p-3 rounded-lg shadow-lg" style="z-index: 1000;">
         Email copied to clipboard!
+    </div>
+
+    <!-- Delete Confirmation Popup -->
+    <div id="deletePopup" class="popup">
+        <p class="text-gray-700">이 포스터는 이미 장바구니에 있습니다. 포스터를 장바구니에서 삭제하시겠습니까?</p>
+        <div class="mt-4 text-center">
+            <button id="confirmDeleteBtn" class="text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg">확인</button>
+            <button id="cancelDeleteBtn" class="text-gray-600 border border-gray-300 px-4 py-2 rounded-lg">취소</button>
+        </div>
+    </div>
+
+    <!-- Add to Cart Confirmation Popup -->
+    <div id="addToCartPopup" class="popup">
+        <p class="text-gray-700">🖼 선택한 포스터를 장바구니에 추가하시겠습니까?</p>
+        <div class="mt-4 text-center">
+            <button id="confirmAddToCartBtn" class="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">확인</button>
+            <button id="cancelAddToCartBtn" class="text-gray-600 border border-gray-300 px-4 py-2 rounded-lg">취소</button>
+        </div>
+    </div>
+
+    <!-- Add these elements to your HTML -->
+    <div id="imageAddedPopup" class="popup hidden">🛒 포스터가 장바구니에 추가되었습니다!</div>
+    <div id="imageRemovedPopup" class="popup">
+        <p class="popup-message">👋 포스터가 장바구니에서 삭제되었습니다!</p>
     </div>
 
     <script>
@@ -129,8 +171,17 @@
         const uploadBtn = document.getElementById('uploadBtn');
         const dropArea = document.getElementById('dropArea');
         const imageContainer = document.getElementById('imageContainer');
+        const cartItems = document.getElementById('cartItems');
         const clearInputBtn = document.getElementById('clearInputBtn');
+        const deletePopup = document.getElementById('deletePopup');
+        const addToCartPopup = document.getElementById('addToCartPopup');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmAddToCartBtn = document.getElementById('confirmAddToCartBtn');
+        const cancelAddToCartBtn = document.getElementById('cancelAddToCartBtn');
         let isRequesting = false;
+        let imageToDelete = null;
+        let imageToAdd = null;
 
         function toggleGetStartedButton() {
             const isEnabled = searchInput.value.trim().length > 0;
@@ -140,6 +191,9 @@
             getStartedBtn.classList.toggle('bg-gray-400', !isEnabled);
             getStartedBtn.classList.toggle('cursor-not-allowed', !isEnabled);
             getStartedBtn.classList.toggle('cursor-pointer', isEnabled);
+
+            // Clear button visibility toggle
+            clearInputBtn.classList.toggle('hidden', !isEnabled);
         }
 
         function showLoadingPopup() {
@@ -152,6 +206,7 @@
 
         function displayImages(imageLinks, imageIds, imageInfos) {
             hideLoadingPopup();
+            isRequesting = false;
 
             imageContainer.innerHTML = '';
 
@@ -163,7 +218,7 @@
                     imgElement.classList.add('w-full', 'h-auto', 'rounded-lg', 'shadow');
                     imgElement.dataset.id = imageIds ? imageIds[index] : '';
                     imgElement.dataset.info = imageInfos ? JSON.stringify(imageInfos[index]) : '';
-                    
+
                     const infoDiv = document.createElement('div');
                     infoDiv.classList.add('image-info');
                     infoDiv.innerHTML = `
@@ -176,12 +231,11 @@
                         <p><strong>Age:</strong> ${imageInfos[index]?.age || 'N/A'}</p>
                     `;
 
-                    imgElement.addEventListener('mouseover', function() {
+                    imgElement.addEventListener('mouseover', function () {
                         infoDiv.style.display = 'block';
                     });
 
-                    imgElement.addEventListener('mouseout', function() {
-                        // Hide infoDiv only if mouse is not over imgElement or infoDiv
+                    imgElement.addEventListener('mouseout', function () {
                         setTimeout(() => {
                             if (!imgElement.matches(':hover') && !infoDiv.matches(':hover')) {
                                 infoDiv.style.display = 'none';
@@ -189,27 +243,29 @@
                         }, 100);
                     });
 
-                    infoDiv.addEventListener('mouseover', function() {
+                    infoDiv.addEventListener('mouseover', function () {
                         infoDiv.style.display = 'block';
                     });
 
-                    infoDiv.addEventListener('mouseout', function() {
-                        // Hide infoDiv only if mouse is not over imgElement or infoDiv
+                    infoDiv.addEventListener('mouseout', function () {
                         setTimeout(() => {
                             if (!imgElement.matches(':hover') && !infoDiv.matches(':hover')) {
                                 infoDiv.style.display = 'none';
                             }
                         }, 100);
-                    });
-
-                    imgElement.addEventListener('click', function() {
-                        showImagePopup(link, this.dataset.id);
                     });
 
                     const wrapper = document.createElement('div');
                     wrapper.classList.add('relative');
                     wrapper.appendChild(imgElement);
                     wrapper.appendChild(infoDiv);
+
+                    // Add click event for adding to cart
+                    imgElement.addEventListener('click', function () {
+                        imageToAdd = imgElement;
+                        addToCartPopup.style.display = 'block';
+                    });
+
                     imageContainer.appendChild(wrapper);
                 });
 
@@ -225,10 +281,52 @@
             }
         }
 
-        function showImagePopup(imageSrc, imageId) {
-            document.getElementById('popupImage').src = imageSrc;
-            document.getElementById('popupImageID').textContent = imageId;
-            document.getElementById('imagePopup').classList.remove('hidden');
+        function addImageToCart(image) {
+            const imageId = image.dataset.id;
+            const imageSrc = image.src;
+            const imageInfo = image.dataset.info ? JSON.parse(image.dataset.info) : {};
+
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+            const imageExists = cart.some(item => item.id === imageId);
+
+            if (!imageExists) {
+                cart.push({
+                    id: imageId,
+                    src: imageSrc,
+                    info: imageInfo
+                });
+
+                localStorage.setItem('cart', JSON.stringify(cart));
+                showPopup('🛒 포스터가 장바구니에 추가되었습니다!', 'imageAddedPopup');
+            } else {
+                deletePopup.classList.add('visible');
+                
+                // 확인 버튼 클릭 시 장바구니에서 포스터 삭제
+                confirmDeleteBtn.addEventListener('click', function() {
+                    // 장바구니에서 포스터 삭제 로직
+                    cart = cart.filter(item => item.id !== imageId);
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                    deletePopup.classList.remove('visible'); // 팝업 숨기기
+
+                    // 삭제 완료 메시지 표시
+                    showPopup('👋 포스터가 장바구니에서 삭제되었습니다!', 'imageRemovedPopup');
+                });
+
+                // 취소 버튼 클릭 시 팝업 숨기기
+                cancelDeleteBtn.addEventListener('click', function() {
+                    deletePopup.classList.remove('visible'); // 팝업 숨기기
+                });
+            }
+        }
+
+        function removeImageFromCart(imageId) {
+            const images = cartItems.querySelectorAll('img');
+            images.forEach(img => {
+                if (img.dataset.id === imageId) {
+                    img.remove();
+                }
+            });
         }
 
         function sendPostRequest(data, isFileUpload = false) {
@@ -250,10 +348,14 @@
                 })
                 .catch(error => {
                     alert('An error occurred: ' + error.message);
+                })
+                .finally(() => {
+                    isRequesting = false;
+                    hideLoadingPopup();
                 });
         }
 
-        document.getElementById('copyButton').addEventListener('click', function(event) {
+        document.getElementById('copyButton').addEventListener('click', function (event) {
             const emailText = document.getElementById('emailText').innerText;
             navigator.clipboard.writeText(emailText).then(() => {
                 const copyButton = event.target;
@@ -271,7 +373,7 @@
         });
 
         document.querySelectorAll('.example-text').forEach(box => {
-            box.addEventListener('click', function() {
+            box.addEventListener('click', function () {
                 searchInput.value = this.querySelector('span').textContent.trim();
                 toggleGetStartedButton();
                 if (!getStartedBtn.disabled) {
@@ -299,13 +401,18 @@
             }
         }
 
-        document.getElementById('closePopupBtn').addEventListener('click', function() {
-            document.getElementById('imagePopup').classList.add('hidden');
-        });
+        function showPopup(message, popupId) {
+            const popup = document.getElementById(popupId);
+            popup.textContent = message;
+            popup.classList.add('visible');
+            setTimeout(() => {
+                popup.classList.remove('visible');
+            }, 1500); // Show the popup for 1.5 seconds
+        }
 
         fileInput.addEventListener('change', handleFileUpload);
 
-        uploadBtn.addEventListener('click', function() {
+        uploadBtn.addEventListener('click', function () {
             fileInput.click();
         });
 
@@ -329,15 +436,41 @@
 
         getStartedBtn.addEventListener('click', handleGetStarted);
 
-        searchInput.addEventListener('input', function() {
+        searchInput.addEventListener('input', toggleGetStartedButton);
+
+        clearInputBtn.addEventListener('click', function () {
+            searchInput.value = '';
             toggleGetStartedButton();
-            clearInputBtn.style.display = this.value ? 'block' : 'none';
+            searchInput.focus(); // Clear 후 입력 필드에 포커스 유지
         });
 
-        clearInputBtn.addEventListener('click', function() {
-            searchInput.value = '';
-            clearInputBtn.style.display = 'none';
-            toggleGetStartedButton();
+        toggleGetStartedButton();
+
+        confirmDeleteBtn.addEventListener('click', function () {
+            if (imageToDelete) {
+                removeImageFromCart(imageToDelete.dataset.id);
+                imageToDelete.remove();
+                deletePopup.style.display = 'none';
+                imageToDelete = null;
+            }
+        });
+
+        cancelDeleteBtn.addEventListener('click', function () {
+            deletePopup.style.display = 'none';
+            imageToDelete = null;
+        });
+
+        confirmAddToCartBtn.addEventListener('click', function () {
+            if (imageToAdd) {
+                addImageToCart(imageToAdd);
+                addToCartPopup.style.display = 'none';
+                imageToAdd = null;
+            }
+        });
+
+        cancelAddToCartBtn.addEventListener('click', function () {
+            addToCartPopup.style.display = 'none';
+            imageToAdd = null;
         });
     </script>
 </body>
