@@ -42,6 +42,14 @@
         .popup button {
             margin: 5px;
         }
+
+        .popup.hidden {
+            display: none;
+        }
+
+        .popup.visible {
+            display: block;
+        }
     </style>
 </head>
 
@@ -49,12 +57,13 @@
     <!-- Header Section -->
     <header class="bg-white shadow w-full">
         <div class="container mx-auto flex justify-between items-center" style="height: 120px;">
-            <a href="https://www.kopis.or.kr" target="_blank">
+            <a href="{{ url_for('index') }}">
                 <img src="{{ url_for('static', filename='images/kopis.gif') }}" alt="KOPIS" style="height: 45px; width: auto;">
             </a>
             <nav class="flex space-x-8 text-gray-700 relative">
-                <a href="https://www.kopis.or.kr" target="_blank" class="hover:text-blue-600">HOME</a>
+                <a href="{{ url_for('index') }}" class="hover:text-blue-600">HOME</a>
                 <a href="https://github.com/This-is-That/poster-copycatch" target="_blank" class="hover:text-blue-600">ABOUT</a>
+                <a href="{{ url_for('cart') }}" class="hover:text-blue-600">CART</a>
                 <div class="relative group">
                     <a href="#" class="hover:text-blue-600">CONTACT</a>
                     <div class="absolute hidden group-hover:flex flex-col items-center bg-white border border-gray-300 shadow-lg p-4 rounded-lg" style="width: 250px; left: 50%; transform: translateX(-50%); top: 100%;">
@@ -119,12 +128,6 @@
         <div id="imageContainer" class="grid grid-cols-3 gap-4 mt-4"></div>
     </section>
 
-    <!-- Cart Section -->
-    <section id="cartSection" class="container mx-auto py-6">
-        <h3 class="text-lg font-bold text-gray-800">Cart</h3>
-        <div id="cartItems" class="grid grid-cols-3 gap-4 mt-4"></div>
-    </section>
-
     <!-- Loading Popup -->
     <div id="loadingPopup" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div class="bg-white p-4 rounded-lg shadow-lg flex items-center justify-center">
@@ -139,7 +142,7 @@
 
     <!-- Delete Confirmation Popup -->
     <div id="deletePopup" class="popup">
-        <p class="text-gray-700">이미지를 장바구니에서 삭제하시겠습니까?</p>
+        <p class="text-gray-700">이 이미지는 이미 장바구니에 있습니다. 이미지를 장바구니에서 삭제하시겠습니까?</p>
         <div class="mt-4 text-center">
             <button id="confirmDeleteBtn" class="text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg">확인</button>
             <button id="cancelDeleteBtn" class="text-gray-600 border border-gray-300 px-4 py-2 rounded-lg">취소</button>
@@ -154,6 +157,10 @@
             <button id="cancelAddToCartBtn" class="text-gray-600 border border-gray-300 px-4 py-2 rounded-lg">취소</button>
         </div>
     </div>
+
+    <!-- Add these elements to your HTML -->
+    <div id="imageAddedPopup" class="popup hidden">이미지가 장바구니에 추가되었습니다!</div>
+    <div id="imageExistsPopup" class="popup hidden">이 이미지는 이미 장바구니에 있습니다.</div>
 
     <script>
         const getStartedBtn = document.getElementById('getStartedBtn');
@@ -182,6 +189,9 @@
             getStartedBtn.classList.toggle('bg-gray-400', !isEnabled);
             getStartedBtn.classList.toggle('cursor-not-allowed', !isEnabled);
             getStartedBtn.classList.toggle('cursor-pointer', isEnabled);
+
+            // Clear button visibility toggle
+            clearInputBtn.classList.toggle('hidden', !isEnabled);
         }
 
         function showLoadingPopup() {
@@ -270,14 +280,26 @@
         }
 
         function addImageToCart(image) {
-            const cartImage = image.cloneNode(true);
-            cartImage.classList.remove('shadow');
-            cartImage.classList.add('border-2', 'border-blue-600');
-            cartImage.addEventListener('click', function () {
-                imageToDelete = cartImage;
-                deletePopup.style.display = 'block';
-            });
-            cartItems.appendChild(cartImage);
+            const imageId = image.dataset.id;
+            const imageSrc = image.src;
+            const imageInfo = image.dataset.info ? JSON.parse(image.dataset.info) : {};
+
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+            const imageExists = cart.some(item => item.id === imageId);
+
+            if (!imageExists) {
+                cart.push({
+                    id: imageId,
+                    src: imageSrc,
+                    info: imageInfo
+                });
+
+                localStorage.setItem('cart', JSON.stringify(cart));
+                showPopup('이미지가 장바구니에 추가되었습니다!', 'imageAddedPopup');
+            } else {
+                showPopup('이 이미지는 이미 장바구니에 있습니다.', 'imageExistsPopup');
+            }
         }
 
         function removeImageFromCart(imageId) {
@@ -361,6 +383,15 @@
             }
         }
 
+        function showPopup(message, popupId) {
+            const popup = document.getElementById(popupId);
+            popup.textContent = message;
+            popup.classList.add('visible');
+            setTimeout(() => {
+                popup.classList.remove('visible');
+            }, 1500); // Show the popup for 1.5 seconds
+        }
+
         fileInput.addEventListener('change', handleFileUpload);
 
         uploadBtn.addEventListener('click', function () {
@@ -392,7 +423,10 @@
         clearInputBtn.addEventListener('click', function () {
             searchInput.value = '';
             toggleGetStartedButton();
+            searchInput.focus(); // Clear 후 입력 필드에 포커스 유지
         });
+
+        toggleGetStartedButton();
 
         confirmDeleteBtn.addEventListener('click', function () {
             if (imageToDelete) {

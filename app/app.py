@@ -74,6 +74,10 @@ def index():
     # Render the index.html template from the templates folder
     return render_template('index.html')
 
+@app.route('/cart')
+def cart():
+    return render_template('cart.html')
+
 @app.route('/process', methods=['POST'])
 def process_input():
     db_connection = mysql.connector.connect(

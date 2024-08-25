@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart - Similarity Analytics Web Service</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <style>
+        .image-info {
+            display: none;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            position: absolute; /* Ensure the info div is positioned correctly */
+            top: 100%; /* Position it below the image */
+            left: 0;
+            z-index: 10;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <!-- Header Section -->
+    <header class="bg-white shadow w-full">
+        <div class="container mx-auto flex justify-between items-center" style="height: 120px;">
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='images/kopis.gif') }}" alt="KOPIS" style="height: 45px; width: auto;">
+            </a>
+            <nav class="flex space-x-8 text-gray-700 relative">
+                <a href="{{ url_for('index') }}" class="hover:text-blue-600">HOME</a>
+                <a href="https://github.com/This-is-That/poster-copycatch" target="_blank" class="hover:text-blue-600">ABOUT</a>
+                <a href="{{ url_for('cart') }}" class="hover:text-blue-600">CART</a>
+                <div class="relative group">
+                    <a href="#" class="hover:text-blue-600">CONTACT</a>
+                    <div class="absolute hidden group-hover:flex flex-col items-center bg-white border border-gray-300 shadow-lg p-4 rounded-lg" style="width: 250px; left: 50%; transform: translateX(-50%); top: 100%;">
+                        <div class="flex items-center justify-center w-full">
+                            <img src="{{ url_for('static', filename='images/mail.png') }}" alt="Mail Icon" class="w-4 h-4 mr-2">
+                            <p id="emailText" class="text-gray-600">wlghks7790@gmail.com</p>
+                        </div>
+                        <button id="copyButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 rounded-lg px-4 py-2 text-sm mt-2">COPY</button>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Section -->
+    <main class="flex-grow container mx-auto py-6">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">Your Cart</h1>
+        <div id="cartItems" class="grid grid-cols-3 gap-4"></div>
+    </main>
+
+    <script>
+        function displayCartItems() {
+            const cartItems = document.getElementById('cartItems');
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+            cartItems.innerHTML = '';
+
+            cart.forEach(item => {
+                const wrapper = document.createElement('div');
+                wrapper.classList.add('relative', 'group'); // Added 'group' class for the hover effect
+
+                const imgElement = document.createElement('img');
+                imgElement.src = item.src;
+                imgElement.alt = 'Cart Item';
+                imgElement.classList.add('w-full', 'h-auto', 'rounded-lg', 'shadow');
+                imgElement.dataset.id = item.id;
+
+                const infoDiv = document.createElement('div');
+                infoDiv.classList.add('image-info');
+                infoDiv.innerHTML = `
+                    <p><strong>Title:</strong> ${item.info?.image_id || 'N/A'}</p>
+                    <p><strong>Start Date:</strong> ${item.info?.start_date || 'N/A'}</p>
+                    <p><strong>End Date:</strong> ${item.info?.end_date || 'N/A'}</p>
+                    <p><strong>Place Name:</strong> ${item.info?.place_name || 'N/A'}</p>
+                    <p><strong>Actor:</strong> ${item.info?.actor || 'N/A'}</p>
+                    <p><strong>Runtime:</strong> ${item.info?.runtime || 'N/A'}</p>
+                    <p><strong>Age:</strong> ${item.info?.age || 'N/A'}</p>
+                `;
+
+                const removeBtn = document.createElement('button');
+                removeBtn.textContent = 'Remove';
+                removeBtn.classList.add('mt-2', 'px-4', 'py-2', 'bg-red-500', 'text-white', 'rounded');
+                removeBtn.onclick = () => removeFromCart(item.id);
+
+                wrapper.appendChild(imgElement);
+                wrapper.appendChild(infoDiv);
+                wrapper.appendChild(removeBtn);
+
+                cartItems.appendChild(wrapper);
+
+                // 이미지와 infoDiv를 감싸는 요소에 대해 hover 상태 유지
+                wrapper.addEventListener('mouseover', () => {
+                    infoDiv.style.display = 'block';
+                });
+
+                wrapper.addEventListener('mouseout', () => {
+                    // 커서가 이미지와 infoDiv 모두에서 벗어날 때만 infoDiv 숨기기
+                    setTimeout(() => {
+                        if (!wrapper.matches(':hover') && !infoDiv.matches(':hover')) {
+                            infoDiv.style.display = 'none';
+                        }
+                    }, 100);
+                });
+            });
+        }
+
+        function removeFromCart(id) {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            cart = cart.filter(item => item.id !== id);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            displayCartItems();
+        }
+
+        // 페이지 로드 시 장바구니 아이템 표시
+        window.onload = displayCartItems;
+    </script>
+</body>
+
+</html>
