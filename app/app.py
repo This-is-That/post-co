@@ -125,8 +125,10 @@ def generate():
     
     # 'prompt'와 'selectedItems'가 POST 데이터에 포함되어 있는지 확인합니다.
     if 'prompt' in data and isinstance(data['prompt'], str) and 'selectedItems' in data and isinstance(data['selectedItems'], list):
-        prompt = data['prompt']
-        selected_items = data['selectedItems']
+        prompt = data['prompt'] # str 타입, prompt 반환
+        selected_items = data['selectedItems'] # list 타입, 포스터 ID 및 url 반환
+        # e.g. [{'id': 'PF150653', 'url': 'http://www.kopis.or.kr/upload/pfmPoster/PF_PF150653_190702_141854.gif'},
+        # {'id': 'PF165313','url': 'http://www.kopis.or.kr/upload/pfmPoster/PF_PF165313_200629_095950.gif'}]
         
         # 작업 수행
         # 예: print(prompt) 또는 다른 처리 작업

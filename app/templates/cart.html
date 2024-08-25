@@ -306,14 +306,17 @@
         // Generate 확인 버튼 클릭 시 요청 보내기
         confirmGenerateBtn.addEventListener('click', () => {
             const promptText = document.getElementById('promptInput').value;
-            const selectedIds = selectedItems.map(item => item.id);
+            const selectedItemsData = selectedItems.map(item => ({
+                id: item.id,
+                url: item.element.querySelector('img').src // 포스터 URL 추가
+            }));
 
             fetch('/generate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ prompt: promptText, selectedItems: selectedIds })
+                body: JSON.stringify({ prompt: promptText, selectedItems: selectedItemsData})
             })
             .then(response => response.json())
             .then(data => {
