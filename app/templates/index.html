@@ -99,7 +99,7 @@
 <body class="bg-gray-100 min-h-screen flex flex-col">
     <!-- Header Section -->
     <header class="bg-white shadow w-full">
-        <div class="container mx-auto flex justify-between items-center" style="height: 120px;">
+        <div class="container mx-auto flex justify-between items-center" style="height: 110px;">
             <a href="{{ url_for('index') }}">
                 <img src="{{ url_for('static', filename='images/kopis.gif') }}" alt="KOPIS" style="height: 45px; width: auto;">
             </a>
@@ -125,7 +125,7 @@
     <main class="flex-grow flex items-center justify-center">
         <div class="flex flex-col items-center justify-center w-full max-w-4xl p-6 bg-transparent rounded-lg">
             <div class="w-full text-center">
-                <h1 class="text-6xl mt-10 mb-4 font-bold text-gray-800">Post-Co</h1>
+                <h1 class="text-6xl mt-6 mb-4 font-bold text-gray-800">Post-Co</h1>
                 <h2 class="text-xl text-gray-800">Image Similarity Analytics Web Service for "Poster-Copyright"</h2>
                 <p class="text-sm text-gray-400 mt-1">Input your text or image, and discover similar posters with your text or image.</p>
                 
@@ -162,7 +162,7 @@
 
     <!-- Image Results Section -->
     <section id="imageResults" class="container mx-auto py-6">
-        <h3 class="text-xl font-bold text-gray-800 text-center mt-4 mb-4">Search Results</h3>
+        <h3 class="text-xl font-bold text-gray-800 text-center mt-4 mb-4 hidden">Search Results</h3>
         <div id="loadingSpinner" class="hidden justify-center items-center mt-4">
             <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -259,6 +259,10 @@
             hideLoadingPopup();
             isRequesting = false;
 
+            // 검색 결과 텍스트를 숨기기 전에 숨김 처리
+            const searchResultsText = document.querySelector('#imageResults h3');
+            searchResultsText.classList.add('hidden');
+
             imageContainer.innerHTML = '';
 
             if (Array.isArray(imageLinks)) {
@@ -348,10 +352,12 @@
                     imageContainer.appendChild(wrapper);
                 });
 
+                // Make the search results text visible after loading images
                 Promise.all(Array.from(imageContainer.querySelectorAll('img')).map(img => {
                     if (img.complete) return Promise.resolve();
                     return new Promise(resolve => { img.onload = img.onerror = resolve; });
                 })).then(() => {
+                    searchResultsText.classList.remove('hidden');
                     document.getElementById('imageResults').scrollIntoView({ behavior: 'smooth' });
                 });
             } else {

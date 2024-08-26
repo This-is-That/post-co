@@ -21,6 +21,10 @@
             background: linear-gradient(135deg, #f8f8f855 25%, transparent 25%) -40px 0/ 80px 80px, linear-gradient(225deg, #f8f8f8 25%, transparent 25%) -40px 0/ 80px 80px, linear-gradient(315deg, #f8f8f855 25%, transparent 25%) 0px 0/ 80px 80px, linear-gradient(45deg, #f8f8f8 25%, #ffffff 25%) 0px 0/ 80px 80px;
         }
 
+        .group:hover .group-hover\:flex {
+            display: flex;
+        }
+
         .image-wrapper {
             position: relative;
             display: flex;
@@ -147,6 +151,12 @@
             display: none;
         }
 
+        #copyPopup {
+            transition: opacity 0.3s ease-in-out;
+            font-size: 0.875rem;
+            transform: translateX(-50%);
+        }
+
         /* GeneratePopup의 스타일 */
         #generatePopup {
             width: 600px; /* 원하는 너비 */
@@ -202,16 +212,32 @@
 
     <!-- Main Section -->
     <main class="flex-grow container mx-auto py-6">
-        <div class="flex justify-between items-center mb-6">
+        <!-- 제목 영역 -->
+        <div class="flex justify-center mb-6">
             <h1 class="text-2xl font-bold text-gray-900">Your Cart</h1>
-            <button id="resetButton" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 disabled:opacity-50" disabled>
-                Reset
-            </button>
-            <button id="generateButton" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50" disabled>
-                Generate New Image!
+        </div>
+
+        <!-- 버튼 영역 -->
+        <div class="flex justify-center mb-6">
+            <!-- 왼쪽 버튼들 -->
+            <div class="flex space-x-6">
+                <button id="deleteButton" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 disabled:opacity-50" disabled>
+                    Delete
+                </button>
+                <div class="flex items-center">
+                    <span id="selectedCount" class="text-gray-900 font-semibold">Selected: 0</span>
+                </div>
+                <button id="resetButton" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 disabled:opacity-50" disabled>
+                    Reset
+                </button>
+            </div>
+        </div>
+        <div class="flex justify-center mb-6">
+            <button id="generateButton" class="bg-blue-600 text-white px-8 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50" disabled>
+                👨‍🎨 Generate New Image!
             </button>
         </div>
-        <div id="cartItems" class="grid grid-cols-3 gap-4"></div>
+        <div id="cartItems" class="grid grid-cols-3 mt-6 gap-4"></div>
 
         <!-- 생성된 이미지 섹션 -->
         <section id="genImageSection" class="hidden">
@@ -273,6 +299,11 @@
         </div>
     </div>
 
+    <!-- Temporary Popup for Email Copy Confirmation -->
+    <div id="copyPopup" class="fixed hidden bg-blue-600 text-white p-3 rounded-lg shadow-lg" style="z-index: 1000;">
+        Email copied to clipboard!
+    </div>
+
     <!-- Footer Section -->
     <footer class="bg-white py-4 shadow mt-auto">
         <div class="container mx-auto text-center text-gray-500">
@@ -294,7 +325,8 @@
         const confirmGenerateBtn = document.getElementById('confirmGenerateBtn');
         const cancelGenerateBtn = document.getElementById('cancelGenerateBtn');
         const promptInput = document.getElementById('promptInput');
-        const resetButton = document.getElementById('resetButton'); // Reset 버튼을 가져옵니다
+        const resetButton = document.getElementById('resetButton');
+        const deleteButton = document.getElementById('deleteButton');
 
         // 텍스트 입력란의 입력이 변경될 때 버튼의 활성화 상태를 업데이트합니다
         function updateGenerateButtonState() {
@@ -318,8 +350,7 @@
         promptInput.addEventListener('input', updateGenerateButtonState);
 
         // 팝업을 표시하는 함수
-        function showDeletePopup(id) {
-            imageIdToRemove = id;
+        function showDeletePopup() {
             deletePopup.classList.add('visible');
         }
 
@@ -344,12 +375,101 @@
             }, 1500); // 1.5초 동안 표시
         }
 
+        // Reset 버튼 클릭 시 호출되는 함수
+        function handleResetButtonClick() {
+            selectedItems.forEach(item => {
+                item.element.classList.remove('selected');
+                item.element.querySelector('.checkmark').textContent = ''; // 체크마크 내용 초기화
+            });
+            selectedItems = []; // 선택된 항목 배열 초기화
+
+            // Generate 버튼 상태 업데이트
+            toggleGenerateButton();
+
+            // Reset 버튼 상태 업데이트
+            resetButton.disabled = true;
+            resetButton.style.backgroundColor = '#66bb6a'; // 초록색
+            resetButton.style.color = 'white';
+            resetButton.style.cursor = 'not-allowed';
+            resetButton.style.opacity = '0.5';
+
+            // Delete 버튼 상태 업데이트
+            deleteButton.disabled = true;
+            deleteButton.style.backgroundColor = '#ef5350'; // 빨간색
+            deleteButton.style.color = 'white';
+            deleteButton.style.cursor = 'not-allowed';
+            deleteButton.style.opacity = '0.5';
+
+            // 로컬 스토리지에서 저장된 선택된 항목이 있다면 제거
+            localStorage.removeItem('selectedItems');
+        }
+
+        // Delete 버튼 클릭 시 호출되는 함수
+        function handleDeleteButtonClick() {
+            if (selectedItems.length > 0) {
+                showDeletePopup(); // 삭제 확인 팝업 표시
+            }
+        }
+
+        // Confirm Delete 버튼 클릭 시 호출되는 함수
+        function confirmDelete() {
+            selectedItems.forEach(item => {
+                removeFromCart(item.id);
+            });
+            selectedItems = []; // 삭제 후 선택된 항목 배열 초기화
+
+            hideDeletePopup();
+            showImageRemovedPopup(); // 삭제 완료 메시지 표시
+            toggleGenerateButton(); // Generate 버튼 상태 업데이트
+            toggleActionButtons(); // Action 버튼 상태 업데이트
+            updateSelectedCount();
+        }
+
+        // Remove from cart 함수
+        function removeFromCart(id) {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            cart = cart.filter(item => item.id !== id);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            displayCartItems();
+        }
+
+        // Action 버튼 상태 업데이트 함수
+        function toggleActionButtons() {
+            if (selectedItems.length > 0) {
+                resetButton.disabled = false;
+                resetButton.style.backgroundColor = '#4caf50'; // 초록색
+                resetButton.style.color = 'white';
+                resetButton.style.cursor = 'pointer';
+                resetButton.style.opacity = '1';
+
+                deleteButton.disabled = false;
+                deleteButton.style.backgroundColor = '#e53935'; // 빨간색
+                deleteButton.style.color = 'white';
+                deleteButton.style.cursor = 'pointer';
+                deleteButton.style.opacity = '1';
+            } else {
+                resetButton.disabled = true;
+                resetButton.style.backgroundColor = '#66bb6a'; // 비활성화 색상 (초록색)
+                resetButton.style.color = 'white';
+                resetButton.style.cursor = 'not-allowed';
+                resetButton.style.opacity = '0.5';
+
+                deleteButton.disabled = true;
+                deleteButton.style.backgroundColor = '#ef5350'; // 비활성화 색상 (빨간색)
+                deleteButton.style.color = 'white';
+                deleteButton.style.cursor = 'not-allowed';
+                deleteButton.style.opacity = '0.5';
+            }
+        }
+
         // 확인 버튼 클릭 시 이미지 삭제
         confirmDeleteBtn.addEventListener('click', function() {
             if (imageIdToRemove !== null) {
                 removeFromCart(imageIdToRemove);
                 hideDeletePopup();
                 showImageRemovedPopup(); // 삭제 완료 메시지 표시
+                selectedItems = [];
+                updateSelectedCount();
             }
         });
 
@@ -363,54 +483,9 @@
             showGeneratePopup(); // 팝업 표시
         });
 
-        function removeFromCart(id) {
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
-            cart = cart.filter(item => item.id !== id);
-            localStorage.setItem('cart', JSON.stringify(cart));
-            displayCartItems();
-        }
-
-        // Reset 버튼 클릭 시 호출되는 함수
-        function handleResetButtonClick() {
-            // 선택된 항목들 초기화
-            selectedItems.forEach(item => {
-                item.element.classList.remove('selected');
-                item.element.querySelector('.checkmark').textContent = ''; // 체크마크 내용 초기화
-            });
-            selectedItems = []; // 선택된 항목 배열 초기화
-
-            // Generate 버튼 상태 업데이트
-            toggleGenerateButton();
-
-            // Reset 버튼 상태 업데이트
-            resetButton.disabled = true;
-            resetButton.style.backgroundColor = '#e57373'; // 비활성화 색상
-            resetButton.style.color = 'white';
-            resetButton.style.cursor = 'not-allowed';
-            resetButton.style.opacity = '0.5';
-
-            // 로컬 스토리지에서 저장된 선택된 항목이 있다면 제거
-            localStorage.removeItem('selectedItems');
-        }
-
-        // Reset 버튼 클릭 이벤트 리스너 추가
-        resetButton.addEventListener('click', handleResetButtonClick);
-
-        // 선택된 항목이 있을 때 Reset 버튼 활성화
-        function toggleResetButton() {
-            if (selectedItems.length > 0) {
-                resetButton.disabled = false;
-                resetButton.style.backgroundColor = '#f44336'; // 빨간색
-                resetButton.style.color = 'white';
-                resetButton.style.cursor = 'pointer';
-                resetButton.style.opacity = '1';
-            } else {
-                resetButton.disabled = true;
-                resetButton.style.backgroundColor = '#e57373'; // 비활성화 색상
-                resetButton.style.color = 'white';
-                resetButton.style.cursor = 'not-allowed';
-                resetButton.style.opacity = '0.5';
-            }
+        function updateSelectedCount() {
+            const selectedCountElement = document.getElementById('selectedCount');
+            selectedCountElement.textContent = `Selected: ${selectedItems.length}`;
         }
 
         function toggleSelection(event) {
@@ -418,20 +493,19 @@
             const id = wrapper.querySelector('img').dataset.id;
 
             if (wrapper.classList.contains('selected')) {
-                // 선택 해제 시
                 wrapper.classList.remove('selected');
                 selectedItems = selectedItems.filter(item => item.id !== id);
                 wrapper.querySelector('.checkmark').textContent = ''; // 체크마크 내용 초기화
             } else {
-                // 새로 선택 시
                 wrapper.classList.add('selected');
                 selectedItems.push({ id, element: wrapper });
                 wrapper.querySelector('.checkmark').textContent = selectedItems.length; // 체크마크에 번호 부여
             }
 
             updateSelectionOrder();
-            toggleGenerateButton(); // 선택 상태 변경 시 버튼 활성화 상태도 업데이트
-            toggleResetButton(); // Reset 버튼 상태 업데이트
+            updateSelectedCount(); // 선택 상태 변경 시 선택 항목 수 업데이트
+            toggleGenerateButton(); // Generate 버튼 상태 업데이트
+            toggleActionButtons(); // Action 버튼 상태 업데이트
         }
 
         function updateSelectionOrder() {
@@ -499,7 +573,10 @@
         window.onload = () => {
             displayCartItems();
             updateGenerateButtonState(); // 페이지 로드 시 Generate 버튼 상태 초기화
-            toggleResetButton(); // 페이지 로드 시 Reset 버튼 상태 초기화
+            toggleActionButtons(); // 페이지 로드 시 Action 버튼 상태 초기화
+
+            // 선택 항목 수 초기화
+            updateSelectedCount();
 
             // 로컬 스토리지에서 생성된 이미지 URL 가져오기
             const storedGeneratedImages = JSON.parse(localStorage.getItem('generatedImages'));
@@ -518,7 +595,7 @@
             cartItems.innerHTML = ''; // 초기화
             selectedItems = []; // 선택된 항목 초기화
             toggleGenerateButton(); // Generate 버튼 상태 초기화
-            toggleResetButton(); // Reset 버튼 상태 초기화
+            toggleActionButtons(); // Action 버튼 상태 초기화
 
             cart.forEach(item => {
                 const wrapper = document.createElement('div');
@@ -670,6 +747,23 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 
+        document.getElementById('copyButton').addEventListener('click', function (event) {
+            const emailText = document.getElementById('emailText').innerText;
+            navigator.clipboard.writeText(emailText).then(() => {
+                const copyButton = event.target;
+                const buttonRect = copyButton.getBoundingClientRect();
+                const popup = document.getElementById('copyPopup');
+                popup.style.left = `${buttonRect.left + buttonRect.width / 2}px`;
+                popup.style.top = `${buttonRect.bottom + 10}px`;
+                popup.classList.remove('hidden');
+                setTimeout(() => {
+                    popup.classList.add('hidden');
+                }, 1500);
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+            });
+        });
+
         // 스크롤 시 버튼 표시 제어
         window.addEventListener('scroll', () => {
             const scrollToTopBtn = document.getElementById('scrollToTopBtn');
@@ -678,6 +772,20 @@
             } else {
                 scrollToTopBtn.classList.add('hidden');
             }
+        });
+
+        // Reset 버튼 클릭 이벤트 리스너 추가
+        resetButton.addEventListener('click', handleResetButtonClick);
+
+        // Delete 버튼 클릭 이벤트 리스너
+        deleteButton.addEventListener('click', handleDeleteButtonClick);
+
+        // Confirm Delete 버튼 클릭 이벤트 리스너
+        confirmDeleteBtn.addEventListener('click', confirmDelete);
+
+        // Cancel Delete 버튼 클릭 이벤트 리스너
+        cancelDeleteBtn.addEventListener('click', () => {
+            hideDeletePopup();
         });
     </script>
 </body>
