@@ -190,27 +190,28 @@
         }
 
         #genImageSection {
-            display: grid;
-            grid-template-columns: 1fr; /* 한 열로 설정 */
-            gap: 16px; /* 이미지 간의 간격 조정 */
-            width: 100%; /* 전체 너비 조정 */
-            max-width: 1200px; /* 최대 너비 설정 */
-            margin: 0 auto; /* 중앙 정렬 */
-            justify-items: center; /* 이미지 가운데 정렬 */
-            align-items: center; /* 수직 가운데 정렬 */
+            display: none; /* 기본적으로 숨김 상태 */
+            /* Flexbox 스타일 */
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            align-items: center;
         }
 
         #genImageSection img {
             width: 100%; /* 이미지 너비를 컨테이너에 맞게 조정 */
             height: auto; /* 비율 유지 */
-            max-width: 350px; /* 이미지 최대 너비 설정 */
+            max-width: 500px; /* 이미지 최대 너비 설정 */
         }
 
         #generatedImages {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 16px;
-            justify-items: center; /* 가운데 정렬 */
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* 가운데 정렬 */
+            gap: 16px; /* 이미지 간의 간격 조정 */
         }
     </style>
 </head>
@@ -274,12 +275,12 @@
         <div id="cartItems" class="grid grid-cols-3 mt-6 gap-4"></div>
 
         <!-- 생성된 이미지 섹션 -->
-        <section id="genImageSection" class="container mx-auto py-6 hidden">
+        <section id="genImageSection" style="display: flex;">
             <button id="scrollToTopBtn" class="scroll-to-top hidden">Top</button>
             <div class="w-full text-center">
                 <h2 class="text-3xl font-bold text-gray-900 mb-4">Generated Images</h2>
             </div>
-            <div id="generatedImages" class="grid gap-4"></div>
+            <div id="generatedImages" class="flex flex-col gap-4 items-center"></div>
         </section>
     </main>
 
@@ -751,9 +752,9 @@
                     wrapper.appendChild(downloadBtn);
                     generatedImages.appendChild(wrapper);
                 });
-                // Scroll to the Generated Images section
+                
                 genImageSection.classList.remove('hidden');
-                genImageSection.style.display = 'block';
+                genImageSection.style.display = 'flex';
 
                 genImageSection.scrollIntoView({ behavior: 'smooth' , block: 'start'});
             } else {
