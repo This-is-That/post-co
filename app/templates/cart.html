@@ -166,14 +166,6 @@
             overflow: auto; /* 내용이 넘칠 경우 스크롤 표시 */
         }
 
-        #genImageSection img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 5px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 10px;
-        }
-
         #downloadPopup {
             width: 300px;
             max-width: 90vw;
@@ -199,17 +191,26 @@
 
         #genImageSection {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); /* 이미지 크기 조정 */
-            gap: 16px; /* 간격 조정 */
-            width: 100%; /* 너비 조정 */
-            max-width: 1200px; /* 컨테이너 최대 너비 설정 */
+            grid-template-columns: 1fr; /* 한 열로 설정 */
+            gap: 16px; /* 이미지 간의 간격 조정 */
+            width: 100%; /* 전체 너비 조정 */
+            max-width: 1200px; /* 최대 너비 설정 */
             margin: 0 auto; /* 중앙 정렬 */
+            justify-items: center; /* 이미지 가운데 정렬 */
+            align-items: center; /* 수직 가운데 정렬 */
         }
 
         #genImageSection img {
             width: 100%; /* 이미지 너비를 컨테이너에 맞게 조정 */
             height: auto; /* 비율 유지 */
-            max-width: 350px; /* 이미지 크기 조정 */
+            max-width: 350px; /* 이미지 최대 너비 설정 */
+        }
+
+        #generatedImages {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            justify-items: center; /* 가운데 정렬 */
         }
     </style>
 </head>
@@ -243,7 +244,7 @@
     <!-- Main Section -->
     <main class="flex-grow container mx-auto py-6">
         <!-- 제목 영역 -->
-        <div class="flex justify-center mb-6">
+        <div class="w-full text-center mb-6">
             <h1 class="text-3xl font-bold text-gray-900">Your Cart</h1>
         </div>
 
@@ -262,10 +263,13 @@
                 </button>
             </div>
         </div>
-        <div class="flex justify-center mb-6">
+        <div class="flex justify-center mb-2">
             <button id="generateButton" class="bg-blue-600 text-white px-8 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50" disabled>
                 👨‍🎨 Generate New Image! 👩‍🎨
             </button>
+        </div>
+        <div class="w-full text-center mb-6">
+            <p class="text-sm text-gray-400 mt-1">이미지 생성에 선택한 포스터를 활용할 수 있어요! (1개 이하 선택 시)</p>
         </div>
         <div id="cartItems" class="grid grid-cols-3 mt-6 gap-4"></div>
 
@@ -275,7 +279,7 @@
             <div class="w-full text-center">
                 <h2 class="text-3xl font-bold text-gray-900 mb-4">Generated Images</h2>
             </div>
-            <div id="generatedImages" class="grid grid-cols-3 gap-4"></div>
+            <div id="generatedImages" class="grid gap-4"></div>
         </section>
     </main>
 
@@ -295,12 +299,23 @@
 
     <!-- Generate New Image Confirmation Popup -->
     <div id="generatePopup" class="popup">
-        <p class="popup-message">선택한 포스터와 입력한 텍스트로 나만의 포스터를 만드세요!</p>
-        <p class="text-sm text-gray-500 mb-4">예시: 포스터 1에 포스터 2가 가진 색감을 입혀줘.</p>
+        <p class="text-xl popup-message">나만의 포스터를 만들어요!</p>
+        <div class="selected-image-container mb-4">
+            <img src="" id="selectedImage" class="inline-block border border-gray-300 rounded-lg max-w-full h-auto hidden" alt="Selected Image" style="max-height:450px">
+            <p id="noImageMessage" class="text-gray-700 popup-message">
+                프롬프트가 구체적일수록 차별화된 포스터를 만들 수 있어요.<br>
+                [예시]<br>
+                해변에서 나들이를 즐기는 가족, 밝고 따뜻한 색감의 이미지 스타일, 모래사장에서 모래성을 쌓는 두 명의 아이와 그들을 다정하게 지켜보는 부모님.
+            </p>
+        </div>
+        <p id="exampleMessage" class="text-gray-500 mb-4 hidden">
+            [예시 1] 이미지 스타일을 밝고 따뜻한 색감으로 변경해줘.<br>
+            [예시 2] 바다의 신비로움과 물결의 흐름을 강조해줘.<br>
+        </p>
         <textarea 
             id="promptInput" 
             class="border border-gray-300 rounded-lg px-4 py-2 w-full h-32 resize-none mb-4" 
-            placeholder="선택한 포스터를 가지고 어떤 포스터를 만들고 싶나요?"
+            placeholder="어떤 포스터를 만들고 싶나요?"
             rows="4"
         ></textarea>
         <p class="popup-message">👨‍🎨 새로운 이미지를 생성하시겠습니까?</p>
@@ -337,7 +352,7 @@
     </div>
 
     <!-- Footer Section -->
-    <footer class="bg-white py-4 shadow mt-auto">
+    <footer class="bg-white py-4 shadow mt-10">
         <div class="container mx-auto text-center text-gray-500">
             &copy; 2024 This-is-That All rights reserved.
         </div>
@@ -359,6 +374,9 @@
         const promptInput = document.getElementById('promptInput');
         const resetButton = document.getElementById('resetButton');
         const deleteButton = document.getElementById('deleteButton');
+        const noImageMessage = document.getElementById('noImageMessage');
+        const selectedImage = document.getElementById('selectedImage');
+        const exampleMessage = document.getElementById('exampleMessage');
 
         // 텍스트 입력란의 입력이 변경될 때 버튼의 활성화 상태를 업데이트합니다
         function updateGenerateButtonState() {
@@ -417,6 +435,7 @@
 
             // Generate 버튼 상태 업데이트
             toggleGenerateButton();
+            updateSelectedCount();
 
             // Reset 버튼 상태 업데이트
             resetButton.disabled = true;
@@ -513,6 +532,25 @@
         // Generate 버튼 클릭 시 팝업 표시
         generateButton.addEventListener('click', () => {
             showGeneratePopup(); // 팝업 표시
+            // 선택된 이미지를 보여주는 함수
+            const selectedItemsData = selectedItems.map(item => ({
+                id: item.id,
+                url: item.element.querySelector('img').src
+            }));
+
+            // 선택된 이미지의 첫 번째 항목을 가져와서 이미지 요소에 설정
+            if (selectedItemsData.length > 0) {
+                const selectedImage = document.getElementById('selectedImage');
+                selectedImage.src = selectedItemsData[0].url;
+                selectedImage.classList.remove('hidden');
+                noImageMessage.classList.add('hidden');
+                exampleMessage.classList.remove('hidden')
+            }
+            else {
+                selectedImage.classList.add('hidden');
+                noImageMessage.classList.remove('hidden');
+                exampleMessage.classList.add('hidden')
+            }
         });
 
         function updateSelectedCount() {
@@ -547,7 +585,7 @@
         }
 
         function toggleGenerateButton() {
-            if (selectedItems.length > 0) {
+            if (selectedItems.length < 2) {
                 generateButton.disabled = false;
                 // 클래스 업데이트: 활성화된 상태의 스타일 적용
                 generateButton.classList.remove('bg-gray-400', 'cursor-not-allowed');
@@ -606,7 +644,7 @@
             displayCartItems();
             updateGenerateButtonState(); // 페이지 로드 시 Generate 버튼 상태 초기화
             toggleActionButtons(); // 페이지 로드 시 Action 버튼 상태 초기화
-
+            
             // 선택 항목 수 초기화
             updateSelectedCount();
 
@@ -616,7 +654,9 @@
                 displayGeneratedImages(storedGeneratedImages);
             }
 
-            window.scrollTo(0, 0);
+            setTimeout(function() {
+                window.scrollTo(0, 0);
+            }, 0);
         };
 
         // 장바구니 항목을 표시하는 함수
@@ -687,7 +727,7 @@
 
                     const downloadBtn = document.createElement('button');
                     downloadBtn.textContent = 'Download';
-                    downloadBtn.classList.add('mt-2', 'bg-blue-600', 'text-white', 'px-4', 'py-2', 'rounded-lg', 'hover:bg-blue-700');
+                    downloadBtn.classList.add('mt-2', 'bg-blue-600', 'text-white', 'px-4', 'py-2', 'mb-20', 'rounded-lg', 'hover:bg-blue-700');
                     downloadBtn.onclick = () => showDownloadPopup(url);
 
                     wrapper.appendChild(imgElement);
@@ -695,10 +735,10 @@
                     generatedImages.appendChild(wrapper);
                 });
                 // Scroll to the Generated Images section
-                genImageSection.scrollIntoView({ behavior: 'smooth' });
-
                 genImageSection.classList.remove('hidden');
                 genImageSection.style.display = 'block';
+
+                genImageSection.scrollIntoView({ behavior: 'smooth' , block: 'start'});
             } else {
                 genImageSection.classList.add('hidden');
                 genImageSection.style.display = 'none';
@@ -776,7 +816,7 @@
 
         // 페이지 상단으로 스크롤 기능 구현
         document.getElementById('scrollToTopBtn').addEventListener('click', () => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo({ top: 0, behavior: 'smooth'});
         });
 
         document.getElementById('copyButton').addEventListener('click', function (event) {

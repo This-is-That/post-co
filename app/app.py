@@ -130,6 +130,8 @@ def generate():
         # e.g. [{'id': 'PF150653', 'url': 'http://www.kopis.or.kr/upload/pfmPoster/PF_PF150653_190702_141854.gif'},
         # {'id': 'PF165313','url': 'http://www.kopis.or.kr/upload/pfmPoster/PF_PF165313_200629_095950.gif'}]
         
+        if len(selected_items) == 0:
+            selected_items = [{'id': 'PF150653', 'url': 'http://www.kopis.or.kr/upload/pfmPoster/PF_PF150653_190702_141854.gif'}]
         # 작업 수행
         # 예: print(prompt) 또는 다른 처리 작업
         
