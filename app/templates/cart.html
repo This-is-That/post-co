@@ -253,13 +253,13 @@
             <!-- 왼쪽 버튼들 -->
             <div class="flex space-x-6">
                 <button id="deleteButton" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 disabled:opacity-50" disabled>
-                    Delete
+                    🧹 Delete
                 </button>
                 <div class="flex items-center">
                     <span id="selectedCount" class="text-gray-900 font-semibold">Selected: 0</span>
                 </div>
                 <button id="resetButton" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 disabled:opacity-50" disabled>
-                    Reset
+                    🛒 Reset
                 </button>
             </div>
         </div>
@@ -724,13 +724,26 @@
                     const imgElement = document.createElement('img');
                     imgElement.src = url;
                     imgElement.alt = `Generated Image ${index + 1}`;
+                    
+                    const editBtn = document.createElement('button');
+                    editBtn.textContent = '👨‍🎨 Edit';
+                    editBtn.classList.add('mt-2', 'bg-blue-600', 'text-white', 'px-4', 'py-2', 'rounded-lg', 'hover:bg-blue-700');
+                    editBtn.onclick = () => {
+                        showGeneratePopup();
+                        const selectedImage = document.getElementById('selectedImage');
+                        selectedImage.src = url;
+                        selectedImage.classList.remove('hidden');
+                        noImageMessage.classList.add('hidden');
+                        exampleMessage.classList.remove('hidden')
+                    }
 
                     const downloadBtn = document.createElement('button');
-                    downloadBtn.textContent = 'Download';
+                    downloadBtn.textContent = '📥 Download';
                     downloadBtn.classList.add('mt-2', 'bg-blue-600', 'text-white', 'px-4', 'py-2', 'mb-20', 'rounded-lg', 'hover:bg-blue-700');
                     downloadBtn.onclick = () => showDownloadPopup(url);
 
                     wrapper.appendChild(imgElement);
+                    wrapper.appendChild(editBtn);
                     wrapper.appendChild(downloadBtn);
                     generatedImages.appendChild(wrapper);
                 });
