@@ -299,7 +299,7 @@
 
     <!-- Generate New Image Confirmation Popup -->
     <div id="generatePopup" class="popup">
-        <p class="text-xl popup-message">나만의 포스터를 만들어요!</p>
+        <p id="generatePopupTitle" class="text-xl popup-message">나만의 포스터를 만들어요!</p>
         <div class="selected-image-container mb-4">
             <img src="" id="selectedImage" class="inline-block border border-gray-300 rounded-lg max-w-full h-auto hidden" alt="Selected Image" style="max-height:450px">
             <p id="noImageMessage" class="text-gray-700 popup-message">
@@ -532,6 +532,8 @@
         // Generate 버튼 클릭 시 팝업 표시
         generateButton.addEventListener('click', () => {
             showGeneratePopup(); // 팝업 표시
+            const generatePopupTitle = document.getElementById('generatePopupTitle');
+            generatePopupTitle.innerText = '나만의 포스터를 만들어요!';
             // 선택된 이미지를 보여주는 함수
             const selectedItemsData = selectedItems.map(item => ({
                 id: item.id,
@@ -731,6 +733,8 @@
                     editBtn.onclick = () => {
                         showGeneratePopup();
                         const selectedImage = document.getElementById('selectedImage');
+                        const generatePopupTitle = document.getElementById('generatePopupTitle');
+                        generatePopupTitle.innerText = '생성한 포스터를 다시 수정할 수 있어요!';
                         selectedImage.src = url;
                         selectedImage.classList.remove('hidden');
                         noImageMessage.classList.add('hidden');
