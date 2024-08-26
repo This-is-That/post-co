@@ -93,6 +93,29 @@
         .popup.visible {
             display: block;
         }
+
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 1000;
+            transition: opacity 0.3s;
+        }
+
+        .scroll-to-top:hover {
+            background-color: #0056b3;
+        }
+
+        .scroll-to-top.hidden {
+            display: none;
+        }
     </style>
 </head>
 
@@ -170,6 +193,7 @@
             </svg>
         </div>
         <div id="imageContainer" class="grid grid-cols-3 gap-4 mt-6"></div>
+        <button id="scrollToTopBtn" class="scroll-to-top hidden">Top</button>
     </section>
 
     <!-- Loading Popup -->
@@ -467,6 +491,11 @@
             });
         });
 
+        // 페이지 상단으로 스크롤 기능 구현
+        document.getElementById('scrollToTopBtn').addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
         function handleFileUpload() {
             if (fileInput.files.length && !isRequesting) {
                 isRequesting = true;
@@ -556,6 +585,16 @@
         cancelAddToCartBtn.addEventListener('click', function () {
             addToCartPopup.style.display = 'none';
             imageToAdd = null;
+        });
+
+        // 스크롤 시 버튼 표시 제어
+        window.addEventListener('scroll', () => {
+            const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+            if (window.scrollY > 300) { // 페이지 스크롤이 300px 이상일 때 버튼 표시
+                scrollToTopBtn.classList.remove('hidden');
+            } else {
+                scrollToTopBtn.classList.add('hidden');
+            }
         });
     </script>
 </body>
