@@ -1,16 +1,15 @@
 from flask import Flask, request, jsonify, render_template
 from CLIP import CLIP
-from googletrans import Translator
 import mysql.connector
 import os
 from FAISS import load_faiss_index, find_similar_images, get_image_urls_from_db
 from PIL import Image
 import io
 from datetime import date
+from API import translate
 
 app = Flask(__name__)
 clip = CLIP()
-translator = Translator()
 faiss_index = load_faiss_index("app/data/faiss_indices/faiss_index.bin")
 
 def convert_gif_to_png(gif_file):
@@ -31,10 +30,6 @@ def process_embedding(embedding, db_connection, cursor):
         print(f"Error: {err}")
 
     return image_urls, distances
-
-def translate_text(text, src='ko', dest='en'):
-    translation = translator.translate(text, src=src, dest=dest)
-    return translation.text
 
 def allowed_file(filename):
     # 파일이 허용된 유형인지 확인 (예: .jpg, .png, .gif)
@@ -100,7 +95,7 @@ def process_input():
         elif request.content_type == 'application/json':
             if 'text' in request.json:
                 text = request.json['text']
-                translated_text = translate_text(text)
+                translated_text = translate(text)
                 embedding = clip.extract_text_embedding(translated_text)
             else:
                 return jsonify({'error': '유효한 JSON 데이터가 제공되지 않았습니다'}), 400

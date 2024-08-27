@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cart - Similarity Analytics Web Service</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
     <style>
         @font-face {
             font-family: 'TTLaundryGothicB';
@@ -270,7 +271,7 @@
             </button>
         </div>
         <div class="w-full text-center mb-6">
-            <p class="text-sm text-gray-400 mt-1">이미지 생성에 선택한 포스터를 활용할 수 있어요! (1개 이하 선택 시)</p>
+            <p class="text-sm text-gray-400 mt-1">선택한 포스터를 이미지 생성에 활용할 수 있어요! (1개 이하 선택 시)</p>
         </div>
         <div id="cartItems" class="grid grid-cols-3 mt-6 gap-4"></div>
 
@@ -304,10 +305,9 @@
         <div class="selected-image-container mb-4">
             <img src="" id="selectedImage" class="inline-block border border-gray-300 rounded-lg max-w-full h-auto hidden" alt="Selected Image" style="max-height:450px">
             <p id="noImageMessage" class="text-gray-700 popup-message">
-                프롬프트가 구체적일수록 차별화된 포스터를 만들 수 있어요.<br>
-                [예시]<br>
-                해변에서 나들이를 즐기는 가족, 밝고 따뜻한 색감의 이미지 스타일, 모래사장에서 모래성을 쌓는 두 명의 아이와 그들을 다정하게 지켜보는 부모님.
-            </p>
+                원하는 포스터를 설명해주세요!<br>
+                gpt4o-mini로 구체적인 설명을 작성하고, DALL-E 3로 이미지를 생성해드려요.<br>
+                [예시] 바다의 신비로움과 웅장함을 강조한 포스터
         </div>
         <p id="exampleMessage" class="text-gray-500 mb-4 hidden">
             [예시 1] 이미지 스타일을 밝고 따뜻한 색감으로 변경해줘.<br>
@@ -319,7 +319,7 @@
             placeholder="어떤 포스터를 만들고 싶나요?"
             rows="4"
         ></textarea>
-        <p class="popup-message">👨‍🎨 새로운 이미지를 생성하시겠습니까?</p>
+        <p class="popup-message">👨‍🎨 새로운 포스터를 생성하시겠습니까?</p>
         <div class="mt-4 text-center">
             <button id="confirmGenerateBtn" class="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg" disabled>확인</button>
             <button id="cancelGenerateBtn" class="text-gray-600 border border-gray-300 px-4 py-2 rounded-lg">취소</button>
