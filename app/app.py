@@ -1,16 +1,20 @@
 from flask import Flask, request, jsonify, render_template
 from CLIP import CLIP
-from googletrans import Translator
 import mysql.connector
 import os
 from FAISS import load_faiss_index, find_similar_images, get_image_urls_from_db
 from PIL import Image
 import io
 from datetime import date
+from API import translate, generate_image
+from openai import OpenAI
+from transformers import pipeline
 
 app = Flask(__name__)
 clip = CLIP()
-translator = Translator()
+client = OpenAI()
+pipe = pipeline("image-to-text", model="nlpconnect/vit-gpt2-image-captioning", device=0)
+# client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
 faiss_index = load_faiss_index("app/data/faiss_indices/faiss_index.bin")
 
 def convert_gif_to_png(gif_file):
@@ -31,10 +35,6 @@ def process_embedding(embedding, db_connection, cursor):
         print(f"Error: {err}")
 
     return image_urls, distances
-
-def translate_text(text, src='ko', dest='en'):
-    translation = translator.translate(text, src=src, dest=dest)
-    return translation.text
 
 def allowed_file(filename):
     # 파일이 허용된 유형인지 확인 (예: .jpg, .png, .gif)
@@ -100,7 +100,7 @@ def process_input():
         elif request.content_type == 'application/json':
             if 'text' in request.json:
                 text = request.json['text']
-                translated_text = translate_text(text)
+                translated_text = translate(text)
                 embedding = clip.extract_text_embedding(translated_text)
             else:
                 return jsonify({'error': '유효한 JSON 데이터가 제공되지 않았습니다'}), 400
@@ -118,6 +118,23 @@ def process_input():
     finally:
         cursor.close()
         db_connection.close()
+
+@app.route('/generate', methods=['POST'])
+def generate():
+    data = request.get_json()  # JSON 형식으로 데이터를 받아옵니다.
+    selected_item = None
+    
+    # 'prompt'와 'selectedItems'가 POST 데이터에 포함되어 있는지 확인합니다.
+    if 'prompt' in data and isinstance(data['prompt'], str):
+        prompt = data['prompt'] # str 타입, prompt 반환
+        selected_item = data['selectedItem'] # str 타입, 포스터 url 반환
+        
+        img_url = generate_image(pipe, client, prompt, img_url=selected_item)
+        
+        return jsonify({'gen_image_urls': [img_url]}), 200  # 성공 메시지 반환
+        
+    else:
+        return jsonify({'error': 'Invalid input'}), 400  # 에러 메시지 반환
 
 @app.errorhandler(400)
 def bad_request(error):
