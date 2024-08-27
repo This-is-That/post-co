@@ -310,7 +310,7 @@
                 [예시] 바다의 신비로움과 웅장함을 강조한 포스터
         </div>
         <p id="exampleMessage" class="text-gray-500 mb-4 hidden">
-            [예시 1] 이미지 스타일을 밝고 따뜻한 색감으로 변경해줘.<br>
+            [예시 1] 이미지 스타일을 밝고 따뜻한 색상으로 변경해줘.<br>
             [예시 2] 바다의 신비로움과 물결의 흐름을 강조해줘.<br>
         </p>
         <textarea 
@@ -362,6 +362,7 @@
     <script>
         let imageIdToRemove = null; // 삭제할 이미지 ID를 저장할 변수
         let selectedItems = []; // 선택된 항목들을 추적할 배열
+        let isEditMode = false;
 
         // 팝업 요소와 버튼을 가져옵니다
         const deletePopup = document.getElementById('deletePopup');
@@ -604,10 +605,7 @@
         // Generate 확인 버튼 클릭 시 요청 보내기
         confirmGenerateBtn.addEventListener('click', () => {
             const promptText = document.getElementById('promptInput').value;
-            const selectedItemsData = selectedItems.map(item => ({
-                id: item.id,
-                url: item.element.querySelector('img').src
-            }));
+            const selectedImage = document.getElementById('selectedImage');
 
             hideGeneratePopup(); // 생성 팝업 숨기기
             showLoadingPopup(); // 로딩 팝업 표시
@@ -617,7 +615,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ prompt: promptText, selectedItems: selectedItemsData})
+                body: JSON.stringify({ prompt: promptText, selectedItem: selectedImage.src})
             })
             .then(response => response.json())
             .then(data => {
@@ -713,7 +711,7 @@
             });
         }
 
-        // 이미지 섹션을 표시하는 함수
+        // 생성 이미지 섹션을 표시하는 함수
         function displayGeneratedImages(imageUrls) {
             const genImageSection = document.getElementById('genImageSection');
             const generatedImages = document.getElementById('generatedImages');
@@ -739,7 +737,7 @@
                         selectedImage.src = url;
                         selectedImage.classList.remove('hidden');
                         noImageMessage.classList.add('hidden');
-                        exampleMessage.classList.remove('hidden')
+                        exampleMessage.classList.remove('hidden');
                     }
 
                     const downloadBtn = document.createElement('button');

@@ -1,33 +1,7 @@
 import requests
-import base64
-from PIL import Image
-from io import BytesIO
 import os
-from openai import OpenAI
 import urllib.request
 import json
-# URL 이미지를 다운로드하여 base64로 인코딩하는 함수
-def download_and_encode_image(image_url):
-    response = requests.get(image_url)
-    if response.status_code == 200:
-        image_data = response.content
-        
-        # GIF 파일을 PNG로 변환
-        if not image_url.endswith('.png'):
-            image_data = convert_image_to_png(image_data)
-
-        image_base64 = base64.b64encode(image_data).decode("utf-8")
-        return image_base64
-    else:
-        raise Exception(f"Failed to download image: {response.status_code} - {response.text}")
-
-# GIF 이미지를 PNG로 변환하는 함수
-def convert_image_to_png(image_data):
-    with Image.open(BytesIO(image_data)) as img:
-        # 첫 번째 프레임을 PNG로 변환
-        png_image = BytesIO()
-        img.save(png_image, format="PNG")
-        return png_image.getvalue()
 
 def translate(prompt, src='ko', tar='en'):
     client_id = os.environ['NAVER_PAPAGO_ID']
@@ -46,30 +20,48 @@ def translate(prompt, src='ko', tar='en'):
     else:
         print("Error Code:" + rescode)
 
-def generate_image() -> str:
-    pass
+def dalle3(client, prompt) -> str:
+    response = client.images.generate(
+        model="dall-e-3",
+        prompt=prompt,
+        size="1024x1792",
+        quality="standard",
+        n=1,
+    )
+    return response.data[0].url
 
-def edit_image() -> str:
-    pass
+def generate_image(pipe, client, prompt, img_url = None) -> str:
+    prompt_en = translate(prompt)
+    if img_url:
+        response = requests.get(img_url)
+        if response.status_code == 200:
+            data = response.content
+        else:
+            raise Exception(f"Failed to download image: {response.status_code} - {response.text}")
 
-def advanced_prompt(prompt, client):
+        headers = {"Authorization": f"Bearer {os.environ['HF_API_KEY']}"}
+        try:
+            API_URL = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large"
+            response_hf = requests.post(API_URL, headers=headers, data=data)
+            generated_text = response_hf.json()[0]['generated_text']            
+        except:
+            generated_text = pipe(img_url)
+            
+        prompt_advanced = (
+            f"Original Image Description:\n{generated_text}\n\n"
+            f"Modification Instructions:\n{prompt_en}"
+        )
+    else:
+        prompt_advanced = advanced_prompt(client, prompt_en)
+    return dalle3(client, prompt_advanced)
+
+
+def advanced_prompt(client, prompt):
     completion = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
                 {"role": "system", "content": "You are an expert assistant in generating detailed and creative prompts for visual content, especially theatre posters. When a user provides a prompt, break it down into three parts: a basic prompt, an image style, and a detailed description, ensuring clarity and creativity."},
                 {"role": "user", "content": prompt},
-                ]
+                ],
     )
     return completion.choices[0].message.content
-
-if __name__ == '__main__':
-    prompt = "바다의 신비로움과 웅장함을 강조하는 포스터"
-
-    prompt_en = translate(prompt)
-    print(prompt_en)
-
-    client = OpenAI()
-    # client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
-
-    completion = advanced_prompt(prompt_en, client)
-    print(completion)

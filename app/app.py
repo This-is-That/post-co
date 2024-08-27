@@ -6,10 +6,15 @@ from FAISS import load_faiss_index, find_similar_images, get_image_urls_from_db
 from PIL import Image
 import io
 from datetime import date
-from API import translate
+from API import translate, generate_image
+from openai import OpenAI
+from transformers import pipeline
 
 app = Flask(__name__)
 clip = CLIP()
+client = OpenAI()
+pipe = pipeline("image-to-text", model="nlpconnect/vit-gpt2-image-captioning", device=0)
+# client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
 faiss_index = load_faiss_index("app/data/faiss_indices/faiss_index.bin")
 
 def convert_gif_to_png(gif_file):
@@ -117,22 +122,17 @@ def process_input():
 @app.route('/generate', methods=['POST'])
 def generate():
     data = request.get_json()  # JSON 형식으로 데이터를 받아옵니다.
+    selected_item = None
     
     # 'prompt'와 'selectedItems'가 POST 데이터에 포함되어 있는지 확인합니다.
-    if 'prompt' in data and isinstance(data['prompt'], str) and 'selectedItems' in data and isinstance(data['selectedItems'], list):
+    if 'prompt' in data and isinstance(data['prompt'], str):
         prompt = data['prompt'] # str 타입, prompt 반환
-        selected_items = data['selectedItems'] # list 타입, 포스터 ID 및 url 반환
-        # e.g. [{'id': 'PF150653', 'url': 'http://www.kopis.or.kr/upload/pfmPoster/PF_PF150653_190702_141854.gif'},
-        # {'id': 'PF165313','url': 'http://www.kopis.or.kr/upload/pfmPoster/PF_PF165313_200629_095950.gif'}]
+        selected_item = data['selectedItem'] # str 타입, 포스터 url 반환
         
-        if len(selected_items) == 0:
-            selected_items = [{'id': 'PF150653', 'url': 'http://www.kopis.or.kr/upload/pfmPoster/PF_PF150653_190702_141854.gif'}]
-        # 작업 수행
-        # 예: print(prompt) 또는 다른 처리 작업
+        img_url = generate_image(pipe, client, prompt, img_url=selected_item)
         
-        return jsonify({'gen_image_urls': [item['url'] for item in selected_items]}), 200  # 성공 메시지 반환
-        # return jsonify({'gen_image_urls': ['http://www.kopis.or.kr/upload/pfmPoster/PF_PF150653_190702_141854.gif', 
-        #                                    'http://www.kopis.or.kr/upload/pfmPoster/PF_PF165313_200629_095950.gif',]}), 200  # 성공 메시지 반환
+        return jsonify({'gen_image_urls': [img_url]}), 200  # 성공 메시지 반환
+        
     else:
         return jsonify({'error': 'Invalid input'}), 400  # 에러 메시지 반환
 
