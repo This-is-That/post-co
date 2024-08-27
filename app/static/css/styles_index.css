@@ -1,0 +1,109 @@
+@font-face {
+    font-family: 'TTLaundryGothicB';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2403-2@1.0/TTLaundryGothicB.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+}
+
+body {
+    font-family: 'TTLaundryGothicB', sans-serif;
+    font-weight: 400;
+    background-color: #ececec;
+    background: linear-gradient(135deg, #f8f8f855 25%, transparent 25%) -40px 0/ 80px 80px, linear-gradient(225deg, #f8f8f8 25%, transparent 25%) -40px 0/ 80px 80px, linear-gradient(315deg, #f8f8f855 25%, transparent 25%) 0px 0/ 80px 80px, linear-gradient(45deg, #f8f8f8 25%, #ffffff 25%) 0px 0/ 80px 80px;
+}
+
+#copyPopup {
+    transition: opacity 0.3s ease-in-out;
+    font-size: 0.875rem;
+    transform: translateX(-50%);
+}
+
+#imageResults {
+    display: flex;
+    justify-content: center; /* 중앙 정렬 */
+    flex-direction: column;
+}
+
+#imageContainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); /* 이미지 크기 조정 */
+    gap: 16px; /* 간격 조정 */
+    width: 100%; /* 너비 조정 */
+    max-width: 1200px; /* 컨테이너 최대 너비 설정 */
+    margin: 0 auto; /* 중앙 정렬 */
+}
+
+#imageContainer img {
+    width: 100%; /* 이미지 너비를 컨테이너에 맞게 조정 */
+    height: auto; /* 비율 유지 */
+    max-width: 350px; /* 이미지 크기 조정 */
+}
+
+.group:hover .group-hover\:flex {
+    display: flex;
+}
+
+.image-info {
+    position: absolute;
+    bottom: 0; /* 정보 창이 이미지의 아래쪽에 위치하도록 설정 */
+    left: 0;
+    right: 0;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 5px;
+    opacity: 0; /* 초기에는 투명하게 설정 */
+    transform: translateY(20px); /* 초기에는 위쪽으로 이동 */
+    transition: opacity 0.3s ease, transform 0.3s ease; /* 애니메이션 효과 */
+    z-index: 10; /* 이미지 위에 표시되도록 설정 */
+    max-width: 350px; /* 이미지 크기 조정 */
+}
+
+/* Popup styles */
+.popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 16px;
+    display: none;
+}
+
+.popup button {
+    margin: 5px;
+}
+
+.popup.hidden {
+    display: none;
+}
+
+.popup.visible {
+    display: block;
+}
+
+.scroll-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    z-index: 1000;
+    transition: opacity 0.3s;
+}
+
+.scroll-to-top:hover {
+    background-color: #0056b3;
+}
+
+.scroll-to-top.hidden {
+    display: none;
+}
