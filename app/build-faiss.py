@@ -7,13 +7,7 @@ import json
 import re
 
 # 데이터베이스에서 특징 벡터와 이미지 ID를 가져오는 함수
-def get_feature_vectors_and_ids_from_db():
-    db_connection = mysql.connector.connect(
-        host=os.environ['KOPIS_DB_HOST'],       # MySQL 서버 호스트명
-        user=os.environ['KOPIS_DB_USER'],   # MySQL 사용자 이름
-        password=os.environ['KOPIS_DB_PASSWORD'], # MySQL 비밀번호
-        database=os.environ['KOPIS_DB_DATABASE']  # 연결할 데이터베이스 이름
-    )
+def get_feature_vectors_and_ids_from_db(db_connection):
     cursor = db_connection.cursor()
     cursor.execute("SELECT ID, feature_vector FROM images_features") 
 
@@ -65,9 +59,15 @@ def save_faiss_index(index, index_filename="app/data/faiss_indices/faiss_index.b
     faiss.write_index(index, index_filename)  # FAISS 인덱스 저장
 
 if __name__ == "__main__":
+    db_connection = mysql.connector.connect(
+        host=os.environ['KOPIS_DB_HOST'],       # MySQL 서버 호스트명
+        user=os.environ['KOPIS_DB_USER'],   # MySQL 사용자 이름
+        password=os.environ['KOPIS_DB_PASSWORD'], # MySQL 비밀번호
+        database=os.environ['KOPIS_DB_DATABASE']  # 연결할 데이터베이스 이름
+    )
     # 데이터베이스에서 특징 벡터와 이미지 ID를 가져옴
     print('[START] 데이터베이스에서 특징 벡터와 이미지 ID를 가져옴')
-    ids, feature_vectors = get_feature_vectors_and_ids_from_db()
+    ids, feature_vectors = get_feature_vectors_and_ids_from_db(db_connection)
 
     # FAISS 인덱스 생성
     print('[START] FAISS 인덱스 생성')
