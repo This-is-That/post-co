@@ -71,4 +71,5 @@
 4. Open your web browser and go to `http://127.0.0.1:5000/` to start using the service.
 
 ## License
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)<br>
 This project is licensed under the [MIT License](LICENSE).

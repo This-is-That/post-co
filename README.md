@@ -71,4 +71,5 @@
 4. 웹 브라우저에서 `http://127.0.0.1:5000/`로 접속하여 서비스를 사용합니다.
 
 ## 라이선스
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)<br>
 이 프로젝트는 [MIT 라이선스](LICENSE)를 따릅니다.
