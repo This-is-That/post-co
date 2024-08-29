@@ -63,20 +63,20 @@
   - Non-designers and those unfamiliar with AI tools may find it challenging to generate detailed images using simple text input on traditional platforms.
   - **Post-Co** assists users by crafting more specific prompts based on a predefined template, enabling the creation of detailed images.
 
-## 향후 과제
-### 1. 프롬프트 구체화 기능 개선
+## 향후 과제 (Future Enhancements)
+### 1. 프롬프트 구체화 기능 개선 (Improved Prompt Customization)
 - **현재(As-Is):** AI에게 프롬프트 구체화를 의존하고 있어 사용자가 원하는 이미지를 생성하는 데 한계가 있습니다.
 - **미래(To-Be):** 사용자가 직접 프롬프트를 구체화할 수 있도록 예시 키워드를 제공하여 디테일한 이미지 생성이 가능하도록 개선할 예정입니다.
 - **Current (As-Is):** Users rely on AI to craft detailed prompts, which may limit the accuracy of the generated images.
 - **Future (To-Be):** We plan to provide example keywords that users can utilize to fine-tune their prompts, allowing for more precise image generation.
 
-### 2. 텍스트 렌더링 성능 개선
+### 2. 텍스트 렌더링 성능 개선 (Enhanced Text Rendering in Images)
 - **현재(As-Is):** DALL-E 3 모델은 이미지 내 텍스트 렌더링 성능이 부족합니다.
 - **미래(To-Be):** 향후 Ideogram 2.0을 사용하여 강화된 텍스트 필터링 및 색상 팔레트 기능을 제공할 계획입니다 (현재 Ideogram API는 베타 단계).
 - **Current (As-Is):** The DALL-E 3 model has limitations in rendering text within images.
 - **Future (To-Be):** We aim to integrate Ideogram 2.0, which will offer improved text filtering and color palette features (currently, the Ideogram API is in beta).
 
-## 프로젝트 설치 및 실행 방법
+## 프로젝트 설치 및 실행 방법 (Installation & Setup)
 1. 리포지토리를 클론합니다 (Clone the repository):
     ```bash
     git clone https://github.com/username/Post-Co.git
@@ -92,7 +92,7 @@
 4. 웹 브라우저에서 `http://127.0.0.1:5000/`로 접속하여 서비스를 사용합니다.<br>
 Open your web browser and go to `http://127.0.0.1:5000/` to start using the service.
 
-## 라이선스
+## 라이선스 (License)
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)<br>
 이 프로젝트는 [MIT 라이선스](LICENSE)를 따릅니다.<br>
 This project is licensed under the [MIT License](LICENSE).
