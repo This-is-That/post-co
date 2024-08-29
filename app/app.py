@@ -13,8 +13,8 @@ from transformers import pipeline
 app = Flask(__name__)
 clip = CLIP()
 client = OpenAI()
-pipe = pipeline("image-to-text", model="nlpconnect/vit-gpt2-image-captioning", device=0)
 # client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+pipe = pipeline("image-to-text", model="nlpconnect/vit-gpt2-image-captioning", device=0)
 faiss_index = load_faiss_index("app/data/faiss_indices/faiss_index.bin")
 
 def convert_gif_to_png(gif_file):

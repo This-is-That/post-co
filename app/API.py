@@ -39,13 +39,7 @@ def generate_image(pipe, client, prompt, img_url = None) -> str:
         else:
             raise Exception(f"Failed to download image: {response.status_code} - {response.text}")
 
-        headers = {"Authorization": f"Bearer {os.environ['HF_API_KEY']}"}
-        try:
-            API_URL = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large"
-            response_hf = requests.post(API_URL, headers=headers, data=data)
-            generated_text = response_hf.json()[0]['generated_text']            
-        except:
-            generated_text = pipe(img_url)
+        generated_text = pipe(img_url)
             
         prompt_advanced = (
             f"Original Image Description:\n{generated_text}\n\n"
