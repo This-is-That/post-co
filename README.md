@@ -1,6 +1,6 @@
 # Post-Co: Image Search & Generation Web Service for "Poster-Copyright"
 
-![Title](app\static\images\main.png)
+![Title](app/static/images/main.png)
 
 <div align="center">
     <a href="README_en.md"><img src="https://img.shields.io/badge/lang-English-blue.svg" alt="English"></a>
