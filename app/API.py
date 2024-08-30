@@ -2,6 +2,7 @@ import requests
 import os
 import urllib.request
 import json
+from openai import OpenAI
 
 def translate(prompt, src='ko', tar='en'):
     client_id = os.environ['NAVER_PAPAGO_ID']
@@ -21,14 +22,82 @@ def translate(prompt, src='ko', tar='en'):
         print("Error Code:" + rescode)
 
 def dalle3(client, prompt) -> str:
-    response = client.images.generate(
-        model="dall-e-3",
-        prompt=prompt,
-        size="1024x1792",
-        quality="standard",
-        n=1,
-    )
-    return response.data[0].url
+    def call_dalle(client, prompt):
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=prompt,
+            size="1024x1792",
+            quality="standard",
+            n=1,
+        )
+        return response
+
+    try:
+        response = call_dalle(client, prompt)
+        
+        # 응답 코드가 200이 아닐 경우 예외를 발생시킴
+        if response.status_code != 200:
+            client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+            response = call_dalle(client, prompt)
+
+        return response.data[0].url
+
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        
+        client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+        try:
+            response = call_dalle(client, prompt)
+            
+            # 다시 응답을 확인하여 처리
+            if response.status_code == 200:
+                return response.data[0].url
+            else:
+                raise Exception(f"Failed again with status code {response.status_code}")
+        
+        except Exception as e:
+            print(f"Retry failed: {e}")
+            raise e  # 필요에 따라 예외를 다시 발생시킬 수 있음
+
+
+def advanced_prompt(client, prompt):
+    def call_openai(client, prompt):
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are an expert assistant in generating detailed and creative prompts for visual content, especially theatre posters. When a user provides a prompt, break it down into three parts: a basic prompt, an image style, and a detailed description, ensuring clarity and creativity."},
+                {"role": "user", "content": prompt},
+            ],
+        )
+        return response
+
+    try:
+        response = call_openai(client, prompt)
+        
+        # 응답 코드가 200이 아닐 경우
+        if response.status_code != 200:
+            print("response status code is not 200")
+            client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+            response = call_openai(client, prompt)
+        
+        return response.choices[0].message.content
+
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        
+        client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+        try:
+            response = call_openai(client, prompt)
+            
+            # 다시 응답을 확인하여 처리
+            if response.status_code == 200:
+                return response.choices[0].message.content
+            else:
+                raise Exception(f"Failed again with status code {response.status_code}")
+        
+        except Exception as e:
+            print(f"Retry failed: {e}")
+            raise e  # 필요에 따라 예외를 다시 발생시킬 수 있음
 
 def generate_image(pipe, client, prompt, img_url = None) -> str:
     prompt_en = translate(prompt)
@@ -48,14 +117,3 @@ def generate_image(pipe, client, prompt, img_url = None) -> str:
     else:
         prompt_advanced = advanced_prompt(client, prompt_en)
     return dalle3(client, prompt_advanced)
-
-
-def advanced_prompt(client, prompt):
-    completion = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-                {"role": "system", "content": "You are an expert assistant in generating detailed and creative prompts for visual content, especially theatre posters. When a user provides a prompt, break it down into three parts: a basic prompt, an image style, and a detailed description, ensuring clarity and creativity."},
-                {"role": "user", "content": prompt},
-                ],
-    )
-    return completion.choices[0].message.content
