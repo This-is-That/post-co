@@ -9,13 +9,11 @@ from datetime import date
 from API import translate, generate_image
 from openai import OpenAI
 from transformers import pipeline
-import torch
 
 app = Flask(__name__)
 clip = CLIP()
 client = OpenAI()
-device = 0 if torch.cuda.is_available() else -1
-pipe = pipeline("image-to-text", model="nlpconnect/vit-gpt2-image-captioning", device=device)
+pipe = pipeline("image-to-text", model="nlpconnect/vit-gpt2-image-captioning", device=-1)
 faiss_index = load_faiss_index("app/data/faiss_indices/faiss_index.bin")
 
 def convert_gif_to_png(gif_file):
