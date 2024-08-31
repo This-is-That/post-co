@@ -1,7 +1,5 @@
 import faiss
 import numpy as np
-import mysql.connector
-import os
 
 # FAISS 인덱스를 불러오는 함수
 def load_faiss_index(index_filename="app/data/faiss_indices/faiss_index.bin"):
