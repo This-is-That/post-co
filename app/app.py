@@ -7,16 +7,12 @@ sys.path.insert(0, current_dir)
 sys.path.insert(0, parent_dir)
 
 from flask import Flask, request, jsonify, render_template
-from CLIP import CLIP
 import mysql.connector
 import os
 from FAISS import load_faiss_index, find_similar_images, get_image_urls_from_db
 from PIL import Image
 import io
 from datetime import date
-from API import translate, generate_image
-from openai import OpenAI
-from transformers import pipeline
 
 app = Flask(__name__)
 faiss_index = load_faiss_index("app/data/faiss_indices/faiss_index.bin")
@@ -84,6 +80,7 @@ def cart():
 
 @app.route('/process', methods=['POST'])
 def process_input():
+    from CLIP import CLIP
     clip = CLIP()
     db_connection = mysql.connector.connect(
         host=os.environ['KOPIS_DB_HOST'],       # MySQL 서버 호스트명
@@ -104,6 +101,7 @@ def process_input():
                 return jsonify({'error': '유효한 이미지 파일이 제공되지 않았습니다'}), 400
         elif request.content_type == 'application/json':
             if 'text' in request.json:
+                from API import translate
                 text = request.json['text']
                 translated_text = translate(text)
                 embedding = clip.extract_text_embedding(translated_text)
@@ -126,16 +124,19 @@ def process_input():
 
 @app.route('/generate', methods=['POST'])
 def generate():
+    from openai import OpenAI
     client = OpenAI()
     data = request.get_json()  # JSON 형식으로 데이터를 받아옵니다.
     selected_item = None
     
     # 'prompt'와 'selectedItems'가 POST 데이터에 포함되어 있는지 확인합니다.
     if 'prompt' in data and isinstance(data['prompt'], str):
+        from transformers import pipeline
         pipe = pipeline("image-to-text", model="nlpconnect/vit-gpt2-image-captioning", device=-1)
         prompt = data['prompt'] # str 타입, prompt 반환
         selected_item = data['selectedItem'] # str 타입, 포스터 url 반환
         
+        from API import generate_image
         img_url = generate_image(pipe, client, prompt, img_url=selected_item)
         
         return jsonify({'gen_image_urls': [img_url]}), 200  # 성공 메시지 반환
