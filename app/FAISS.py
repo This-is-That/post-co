@@ -2,7 +2,7 @@ import faiss
 import numpy as np
 import mysql.connector
 import os
-from CLIP import CLIP
+from app.CLIP import CLIP
 import torch
 
 # FAISS 인덱스를 불러오는 함수
