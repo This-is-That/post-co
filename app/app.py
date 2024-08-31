@@ -1,16 +1,22 @@
+import sys
+import os
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.insert(0, current_dir)
+sys.path.insert(0, parent_dir)
+
 from flask import Flask, request, jsonify, render_template
-from app.CLIP import CLIP
+from CLIP import CLIP
 import mysql.connector
 import os
-from app.FAISS import load_faiss_index, find_similar_images, get_image_urls_from_db
+from FAISS import load_faiss_index, find_similar_images, get_image_urls_from_db
 from PIL import Image
 import io
 from datetime import date
-from app.API import translate, generate_image
+from API import translate, generate_image
 from openai import OpenAI
 from transformers import pipeline
-from waitress import serve
-import sys
 
 app = Flask(__name__)
 clip = CLIP()
@@ -142,4 +148,4 @@ def bad_request(error):
     return jsonify({'error': 'Bad Request'}), 400
 
 if __name__ == '__main__':
-    serve(app, host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
