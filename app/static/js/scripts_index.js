@@ -204,7 +204,12 @@ function sendPostRequest(data, isFileUpload = false) {
     };
 
     fetch('/process', options)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => { throw new Error(text); });  // HTML 응답을 텍스트로 읽어 오류로 처리
+            }
+            return response.json();
+        })
         .then(result => {
             if (result.image_links && result.image_ids && result.image_info) {
                 displayImages(result.image_links, result.image_ids, result.image_info);
