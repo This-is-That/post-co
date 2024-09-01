@@ -1,6 +1,6 @@
 # run_waitress.py
 from waitress import serve
-from app import app
+from app.application import app
 import sys
 import os
 
@@ -10,4 +10,4 @@ sys.path.insert(0, current_dir)
 sys.path.insert(0, parent_dir)
 
 if __name__ == "__main__":
-    serve(app, host='0.0.0.0', port=8000)
+    serve(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
