@@ -1,8 +1,10 @@
 import faiss
 import numpy as np
+import os
 
 # FAISS 인덱스를 불러오는 함수
 def load_faiss_index(index_filename="app/data/faiss_indices/faiss_index.bin"):
+    index_filename = os.path.join(os.path.dirname(__file__), 'data/faiss_indices/faiss_index.bin')
     index = faiss.read_index(index_filename)
     return index
 
