@@ -15,7 +15,6 @@ import io
 from datetime import date
 
 app = Flask(__name__)
-faiss_index = load_faiss_index("app/data/faiss_indices/faiss_index.bin")
 
 def convert_gif_to_png(gif_file):
     with Image.open(gif_file) as img:
@@ -27,6 +26,7 @@ def convert_gif_to_png(gif_file):
 
 def process_embedding(embedding, db_connection, cursor):
     try:
+        faiss_index = load_faiss_index("app/data/faiss_indices/faiss_index.bin")
         similar_image_ids, distances = find_similar_images(embedding, faiss_index, top_n=6)
         
         image_urls = get_image_urls_from_db(similar_image_ids, db_connection, cursor)
