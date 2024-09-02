@@ -1,7 +1,7 @@
 # Post-Co: Image Search & Generation Web Service for "Poster-Copyright"
 
 ![Title](app/static/images/main.png)
-
+[Post-Co](http://post-co.ap-northeast-2.elasticbeanstalk.com/) (플랫폼 링크, 현재 배포 중단)
 <div align="center">
     <a href="README_en.md"><img src="https://img.shields.io/badge/lang-English-blue.svg" alt="English"></a>
     <a href="README.md"><img src="https://img.shields.io/badge/lang-한국어-red.svg" alt="한국어"></a>
@@ -49,6 +49,9 @@
 - **Advanced Prompt:** GPT-4o-mini
 - **Translation:** NAVER PAPAGO API
 - **Image Generation:** DALL-E 3
+- **Cloud Database for MySQL:** NAVER CLOUD PLATFORM
+- **Web Server:** Nginx
+- **Web Application Deploy & Management Platform:** AWS Elastic Beanstalk
 
 ## 타 서비스와의 차별점 (Differentiators)
 - **목적에 맞는 이미지 검색 (Purpose-Driven Image Search):** 
@@ -90,7 +93,8 @@
     python app/app.py
     ```
 4. 웹 브라우저에서 `http://127.0.0.1:5000/`로 접속하여 서비스를 사용합니다.<br>
-Open your web browser and go to `http://127.0.0.1:5000/` to start using the service.
+Open your web browser and go to `http://127.0.0.1:5000/` to start using the service.<br>
+(단, 이미지 검색 및 생성 기능은 환경 변수 없이는 사용하실 수 없습니다.)
 
 ## 라이선스 (License)
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)<br>
