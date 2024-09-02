@@ -82,7 +82,7 @@
 ## 프로젝트 설치 및 실행 방법 (Installation & Setup)
 1. 리포지토리를 클론합니다 (Clone the repository):
     ```bash
-    git clone https://github.com/username/Post-Co.git
+    git clone https://github.com/This-is-That/post-co.git
     ```
 2. 필요한 패키지를 설치합니다 (Install the required packages):
     ```bash
@@ -90,7 +90,7 @@
     ```
 3. Flask 애플리케이션을 실행합니다 (Run the Flask application):
     ```bash
-    python app/app.py
+    python app/application.py
     ```
 4. 웹 브라우저에서 `http://127.0.0.1:5000/`로 접속하여 서비스를 사용합니다.<br>
 Open your web browser and go to `http://127.0.0.1:5000/` to start using the service.<br>
