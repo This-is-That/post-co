@@ -1,19 +1,16 @@
 # Post-Co: Image Search & Generation Web Service for "Poster-Copyright"
 
 ![Title](app/static/images/main.png)
-[Post-Co](http://post-co.ap-northeast-2.elasticbeanstalk.com/) (플랫폼 링크, 현재 배포 중단)
+
 <div align="center">
-    <a href="README_en.md"><img src="https://img.shields.io/badge/lang-English-blue.svg" alt="English"></a>
-    <a href="README.md"><img src="https://img.shields.io/badge/lang-한국어-red.svg" alt="한국어"></a>
+    <img src="https://img.shields.io/badge/lang-한국어-red.svg" alt="한국어">
+    <img src="https://img.shields.io/badge/lang-English-blue.svg" alt="English">
 </div>
 
 ## 프로젝트 개요 (Project Overview)
 **Post-Co**는 공연 포스터의 저작권 침해 예방과 창의적 창작을 지원하는 이미지 검색 및 생성 웹 서비스입니다. 이 웹 서비스는 사용자가 이미지 또는 텍스트를 업로드하면 관련된 포스터들을 검색할 수 있게 하며, 이를 바탕으로 새로운 이미지를 생성하거나 수정할 수 있도록 지원합니다. **Post-Co**는 창작자들이 저작권 문제를 예방하면서도 창의적인 결과물을 쉽게 만들어낼 수 있도록 설계되었습니다.
 
 **Post-Co** is a web service designed to prevent copyright infringement in performance posters while fostering creative content creation. This service allows users to upload images or text to search for related posters and provides tools to generate or modify images based on those results. **Post-Co** is tailored to help creators avoid copyright issues while producing original and high-quality content.
-
-### 영어 소제목 (Subtitle)
-"Image Search & Generation Web Service for 'Poster-Copyright'"
 
 ## 팀 소개 (Team Information)
 - **팀 이름:** 이거그건데 (This-is-That)
