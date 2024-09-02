@@ -16,7 +16,7 @@
 - **팀 이름:** 이거그건데 (This-is-That)
 - **프로젝트 참여:** 2024 제 4회 KOPIS 빅데이터 공모전 - 서비스 개발 부문
 - **팀원 구성:**
-  - **이지환:** Client 및 Application 구현
+  - **이지환:** Client 및 Application 구현, 웹사이트 배포
   - **엄재용:** Data 수집과 전처리 및 Database 구축
 
 - **Team Name:** This-is-That
