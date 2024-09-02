@@ -13,8 +13,16 @@ from FAISS import load_faiss_index, find_similar_images, get_image_urls_from_db
 from PIL import Image
 import io
 from datetime import date
+from openai import OpenAI
+from transformers import pipeline
+from API import generate_image, translate
+from CLIP import CLIP
 
-app = Flask(__name__)
+application = Flask(__name__)
+faiss_index = load_faiss_index("data/faiss_indices/faiss_index.bin")
+clip = CLIP()
+pipe = pipeline("image-to-text", model="nlpconnect/vit-gpt2-image-captioning", device=-1)
+client = OpenAI()
 
 def convert_gif_to_png(gif_file):
     with Image.open(gif_file) as img:
@@ -26,7 +34,6 @@ def convert_gif_to_png(gif_file):
 
 def process_embedding(embedding, db_connection, cursor):
     try:
-        faiss_index = load_faiss_index("app/data/faiss_indices/faiss_index.bin")
         similar_image_ids, distances = find_similar_images(embedding, faiss_index, top_n=6)
         
         image_urls = get_image_urls_from_db(similar_image_ids, db_connection, cursor)
@@ -69,19 +76,17 @@ def get_info(image_ids, cursor):
 
     return image_info
 
-@app.route('/')
+@application.route('/')
 def index():
     # Render the index.html template from the templates folder
     return render_template('index.html')
 
-@app.route('/cart')
+@application.route('/cart')
 def cart():
     return render_template('cart.html')
 
-@app.route('/process', methods=['POST'])
+@application.route('/process', methods=['POST'])
 def process_input():
-    from CLIP import CLIP
-    clip = CLIP()
     db_connection = mysql.connector.connect(
         host=os.environ['KOPIS_DB_HOST'],       # MySQL 서버 호스트명
         user=os.environ['KOPIS_DB_USER'],   # MySQL 사용자 이름
@@ -101,7 +106,6 @@ def process_input():
                 return jsonify({'error': '유효한 이미지 파일이 제공되지 않았습니다'}), 400
         elif request.content_type == 'application/json':
             if 'text' in request.json:
-                from API import translate
                 text = request.json['text']
                 translated_text = translate(text)
                 embedding = clip.extract_text_embedding(translated_text)
@@ -122,21 +126,16 @@ def process_input():
         cursor.close()
         db_connection.close()
 
-@app.route('/generate', methods=['POST'])
+@application.route('/generate', methods=['POST'])
 def generate():
-    from openai import OpenAI
-    client = OpenAI()
     data = request.get_json()  # JSON 형식으로 데이터를 받아옵니다.
     selected_item = None
     
     # 'prompt'와 'selectedItems'가 POST 데이터에 포함되어 있는지 확인합니다.
     if 'prompt' in data and isinstance(data['prompt'], str):
-        from transformers import pipeline
-        pipe = pipeline("image-to-text", model="nlpconnect/vit-gpt2-image-captioning", device=-1)
         prompt = data['prompt'] # str 타입, prompt 반환
         selected_item = data['selectedItem'] # str 타입, 포스터 url 반환
         
-        from API import generate_image
         img_url = generate_image(pipe, client, prompt, img_url=selected_item)
         
         return jsonify({'gen_image_urls': [img_url]}), 200  # 성공 메시지 반환
@@ -144,9 +143,9 @@ def generate():
     else:
         return jsonify({'error': 'Invalid input'}), 400  # 에러 메시지 반환
 
-@app.errorhandler(400)
+@application.errorhandler(400)
 def bad_request(error):
     return jsonify({'error': 'Bad Request'}), 400
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    application.run(debug=True)

@@ -1,4 +1,3 @@
-import requests
 import os
 import urllib.request
 import json
@@ -48,12 +47,7 @@ def dalle3(client, prompt) -> str:
         client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
         try:
             response = call_dalle(client, prompt)
-            
-            # 다시 응답을 확인하여 처리
-            if response.status_code == 200:
-                return response.data[0].url
-            else:
-                raise Exception(f"Failed again with status code {response.status_code}")
+            return response.data[0].url
         
         except Exception as e:
             print(f"Retry failed: {e}")
@@ -88,12 +82,7 @@ def advanced_prompt(client, prompt):
         client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
         try:
             response = call_openai(client, prompt)
-            
-            # 다시 응답을 확인하여 처리
-            if response.status_code == 200:
-                return response.choices[0].message.content
-            else:
-                raise Exception(f"Failed again with status code {response.status_code}")
+            return response.choices[0].message.content
         
         except Exception as e:
             print(f"Retry failed: {e}")
@@ -102,13 +91,12 @@ def advanced_prompt(client, prompt):
 def generate_image(pipe, client, prompt, img_url = None) -> str:
     prompt_en = translate(prompt)
     if img_url:
-        response = requests.get(img_url)
-        if response.status_code == 200:
-            data = response.content
-        else:
-            raise Exception(f"Failed to download image: {response.status_code} - {response.text}")
+        try:
+            generated_text = pipe(img_url)
 
-        generated_text = pipe(img_url)
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            generated_text = None  # 오류 발생 시 기본값 설정
             
         prompt_advanced = (
             f"Original Image Description:\n{generated_text}\n\n"
