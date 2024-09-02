@@ -2,9 +2,9 @@
 
 ![Title](app/static/images/main.png)
 
-<div align="center">
-    <img src="https://img.shields.io/badge/lang-한국어-red.svg" alt="한국어">
-    <img src="https://img.shields.io/badge/lang-English-blue.svg" alt="English">
+<div style="text-align: center;">
+    <img src="https://img.shields.io/badge/lang-한국어-blue.svg" alt="한국어">
+    <img src="https://img.shields.io/badge/lang-English-red.svg" alt="English">
 </div>
 
 ## 프로젝트 개요 (Project Overview)
