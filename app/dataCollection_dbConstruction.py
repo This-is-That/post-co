@@ -13,6 +13,7 @@ api_key = os.environ['KOPIS_OPENAPI_KEY']
 
 ### OPEN API 포스터 링크 다운
 
+# 해당 API 데이터가 json이 아닌 XML로 이루어져있기 때문에 XML을 파싱해서 추출한다.
 def read_xml(url):
     # URL에서 XML 데이터를 가져오기
     response = requests.get(url)
@@ -37,7 +38,9 @@ def read_xml(url):
 
 # URL과 데이터 호출
 
+
 # URL
+## 13년부터 23년까지 11년간의 공연을 수집한다.
 url_2013 = f"http://www.kopis.or.kr/openApi/restful/pblprfr?service={api_key}&cpage=1&rows=30000&stdate=20130101&eddate=20131231"
 url_2014 = f"http://www.kopis.or.kr/openApi/restful/pblprfr?service={api_key}&cpage=1&rows=30000&stdate=20140101&eddate=20141231"
 url_2015 = f"http://www.kopis.or.kr/openApi/restful/pblprfr?service={api_key}&cpage=1&rows=30000&stdate=20150101&eddate=20151231"
@@ -67,7 +70,7 @@ xmldf_2023 = read_xml(url_2023)
 print(xmldf_2013.head())
 print(xmldf_2013.columns)
 
-# 필요한 것만
+# 포스터 추출에 필요한 컬럼만 사용한다.
 poster_2013 = xmldf_2013[["mt20id","prfnm","poster"]]
 poster_2014 = xmldf_2014[["mt20id","prfnm","poster"]]
 poster_2015 = xmldf_2015[["mt20id","prfnm","poster"]]
@@ -95,7 +98,7 @@ poster_2023.to_csv('포스터 링크2 2013.csv', index=False, encoding='utf-8-si
 
 
 
-### 11년 통합
+### 각 파일을 하나의 파일로 통합해 사용한다. 
 data2013 = pd.read_csv("/Users/eomjaeyong/Desktop/공모전/KOPIS 데이터 공모전/데이터 모음/포스터 raw2/포스터 링크2 2013.csv")
 data2014 = pd.read_csv("/Users/eomjaeyong/Desktop/공모전/KOPIS 데이터 공모전/데이터 모음/포스터 raw2/포스터 링크2 2014.csv")
 data2015 = pd.read_csv("/Users/eomjaeyong/Desktop/공모전/KOPIS 데이터 공모전/데이터 모음/포스터 raw2/포스터 링크2 2015.csv")
@@ -107,12 +110,7 @@ data2020 = pd.read_csv("/Users/eomjaeyong/Desktop/공모전/KOPIS
 data2021 = pd.read_csv("/Users/eomjaeyong/Desktop/공모전/KOPIS 데이터 공모전/데이터 모음/포스터 raw2/포스터 링크2 2021.csv")
 data2022 = pd.read_csv("/Users/eomjaeyong/Desktop/공모전/KOPIS 데이터 공모전/데이터 모음/포스터 raw2/포스터 링크2 2022.csv")
 data2023 = pd.read_csv("/Users/eomjaeyong/Desktop/공모전/KOPIS 데이터 공모전/데이터 모음/포스터 raw2/포스터 링크2 2023.csv")
-# 영화 시리즈를 그룹화할 열 추가
-def get_series(title):
-    match = re.match(r'(.+?)\s*\[.*\]$', title)
-    if match:
-        return match.group(1).strip()
-    return title
+
 
 data = data2013.merge(data2014, how="outer")
 data = data.merge(data2015, how="outer")
@@ -126,8 +124,16 @@ data = data.merge(data2022, how="outer")
 data = data.merge(data2023, how="outer")
 data.info()
 
+# 영화 시리즈를 그룹화할 열 추가
+## 공연 시리즈 같은 경우 같은 포스터로 지역명만 바꾸어 사용하는 경우가 빈번해 모델 학습에 지장을 줄 가능성이 높다 판단해 시리즈를 지워주는 함수 사용.
+def get_series(title):
+    match = re.match(r'(.+?)\s*\[.*\]$', title)
+    if match:
+        return match.group(1).strip()
+    return title
+
 data['prfnm'] = data['prfnm'].apply(get_series) # 공연 제목 열에 시리즈 제거
-data['prfnm'] = data['prfnm'].str.replace("/", "") # / 문자열 교체로 문자 제거
+data['prfnm'] = data['prfnm'].str.replace("/", "") # / 문자열 교체로 문자 제거 (포스터를 다운받을 때 경로 선택에 영향을 주어 삭제)
 data = data.drop_duplicates(subset=['prfnm']) # 중복 제거 
 data.info()
 
@@ -146,6 +152,7 @@ df['image_id'] = df['image_id'].str.lower() # 문자열 영여 소문자로 변�
 df = df.drop_duplicates(subset=['image_id']) # 중복제거
 df
 
+## 해당 특수문자들 경우 파이썬에서는 중복으로 인식하지 못하는데 MySQL에서는 중복으로 인식하는 경우들이 존재한다. 이를 해결하기 위해 제거한다.
 df['image_id'] = df['image_id'].str.strip() # 앞 뒤 공백 제거
 df['image_id'] = df['image_id'].str.replace(' ', '', regex=False) # 중간 공백 제거
 df['image_id'] = df['image_id'].str.replace('#', '')
@@ -158,14 +165,17 @@ df.loc[:, 'image_id'] = df['image_id'].str.replace('.', '')
 df.loc[:, 'image_id'] = df['image_id'].str.replace('+', '')
 df.loc[:, 'image_id'] = df['image_id'].str.replace('x', '')
 
+
+
 # 정규 표현식을 사용하여 문자열 맨 뒤의 i, ii, iii, iv 등을 제거하는 함수
+## 해당 표현식 또한 위와 마찬가지
 def remove_trailing_numerals(text):
     return re.sub(r'[\s\-]*[ivxIVX0-9]+$', '', text)
 
 # 'image_id' 열에 함수 적용
 df.loc[:, 'image_id'] = df['image_id'].apply(remove_trailing_numerals)
 
-
+## 아래 항목들을 제거하는 이유도 위와 동일
 df = df[df['image_id'] != '광화문연가']
 df = df[df['image_id'] != "acl-korea국제음악제콘서트ⅰ"]
 df = df[df['image_id'] != "acl-korea국제음악제콘서트ⅲ"]
@@ -200,6 +210,8 @@ df = df[df['image_id'] != '서울시향실내악시리즈ⅴ']
 df = df[df['image_id'] != '운지회체임버오케스트라시리즈xⅵ']
 df = df[df['image_id'] != '사운드온디엣지ⅰ,한국작곡가의밤']
 
+
+
 df = df.drop_duplicates(subset=['image_id']) # 중복제거
 df.to_csv("/Users/eomjaeyong/Desktop/공모전/KOPIS 데이터 공모전/데이터 모음/포스터 링크 새로운버전 최종.csv", index=False, encoding='utf-8-sig')
 
@@ -208,6 +220,7 @@ df.to_csv("/Users/eomjaeyong/Desktop/공모전/KOPIS 데이
 df = pd.read_csv("/Users/eomjaeyong/Desktop/공모전/KOPIS 데이터 공모전/데이터 모음/포스터 링크 새로운버전 최종.csv")
 
 # ID를 리스트화
+# ID를 기준으로 공연 정보를 API를 통해 추출해야하기 때문
 id_list = df['ID'].tolist()
 
 # 모든 데이터를 저장할 빈 데이터프레임 생성
@@ -236,7 +249,7 @@ for poster_id in id_list:
 all_data.head()
 all_data.columns
 all_data = all_data[["mt20id", 'prfnm', 'prfpdfrom', 'prfpdto', 'fcltynm', 'prfcast', 'prfruntime', 'prfage']]
-# 이런식으로 하면 된다~
+
 '''
 Mt20id 공연 id
 Prfnm 공연 이름
@@ -250,7 +263,6 @@ Prfage 공연관람연령
 
 all_data.rename(columns={'mt20id': 'ID', 'prfnm': 'image_id', 'prfpdfrom': 'start_date', 'prfpdto': 'end_date', \
                          'fcltynm': 'place_name',  'prfcast': 'actor', 'prfruntime': 'runtime', 'prfage': 'age',}, inplace=True)
-all_data.tail(10)
 all_data.to_csv('포스터 정보 테스트.csv', index=False, encoding='utf-8-sig')
 
 
@@ -258,6 +270,7 @@ all_data.to_csv('포스터 정보 테스트.csv', index=False, encoding='utf-8-s
 ### 이미지 다운!
 df = pd.read_csv("/Users/eomjaeyong/Desktop/공모전/KOPIS 데이터 공모전/데이터 모음/포스터 링크 새로운버전 최종.csv")
 df
+
 # 저장할 디렉토리 설정 (여기서 경로를 원하는 디렉토리로 변경)
 image_dir = '/Users/eomjaeyong/Desktop/공모전/KOPIS 데이터 공모전/데이터 모음/포스터 최종최종최종'
 
@@ -288,6 +301,7 @@ print("All images have been downloaded and saved.")
 
 
 ### 이미지 포스터 파일 분할 
+# 6만개가 넘는 포스터 이미지를 CLIP모델로 한번에 특징벡터를 추출할 수 없서 1000개씩 쪼개어 진행하기 위함.
 
 folder_path = '/Users/eomjaeyong/Desktop/공모전/KOPIS 데이터 공모전/데이터 모음/포스터 최종최종' # 이미지 포스터 원본 폴더 경로
 # 모든 파일 리스트 가져오기
@@ -472,7 +486,7 @@ embedding_columns = [str(i) for i in range(512)]
 # 512개 열 합쳐서 하나로 만들기.
 images_feature['feature_factor'] = images_feature[embedding_columns].values.tolist()
 
-images_feature['feature_factor'] = images_feature['feature_factor'].apply(json.dumps)
+images_feature['feature_factor'] = images_feature['feature_factor'].apply(json.dumps) # 특징벡터 json으로 변경
 images_feature = images_feature[["ID", "feature_factor"]]
 
 images_feature.to_csv("feature_factor.csv", index=False, encoding='utf-8-sig')
