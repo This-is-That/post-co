@@ -2,10 +2,10 @@
 
 ![Title](app/static/images/main.png)
 
-<div style="text-align: center;">
-    <img src="https://img.shields.io/badge/lang-한국어-blue.svg" alt="한국어">
-    <img src="https://img.shields.io/badge/lang-English-red.svg" alt="English">
-</div>
+<p align="center">
+    <img src="https://img.shields.io/badge/lang-한국어-blue.svg" alt="한국어" style="display: inline-block;">
+    <img src="https://img.shields.io/badge/lang-English-red.svg" alt="English" style="display: inline-block;">
+</p>
 
 ## 프로젝트 개요 (Project Overview)
 **Post-Co**는 공연 포스터의 저작권 침해 예방과 창의적 창작을 지원하는 이미지 검색 및 생성 웹 서비스입니다. 이 웹 서비스는 사용자가 이미지 또는 텍스트를 업로드하면 관련된 포스터들을 검색할 수 있게 하며, 이를 바탕으로 새로운 이미지를 생성하거나 수정할 수 있도록 지원합니다. **Post-Co**는 창작자들이 저작권 문제를 예방하면서도 창의적인 결과물을 쉽게 만들어낼 수 있도록 설계되었습니다.
