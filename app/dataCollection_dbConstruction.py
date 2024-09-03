@@ -505,6 +505,8 @@ images_feature.to_csv('images_vector.csv', index=False, encoding='utf-8-sig')
 ### 최종 데이터 베이스 업로드
 
 # 데이터베이스 연결 정보 설정
+config = os.environ['MySQL_DB']
+
 config = {
     'user': 'root',
     'password': '01093382277',
