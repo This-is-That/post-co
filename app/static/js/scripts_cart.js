@@ -171,6 +171,15 @@ cancelDeleteBtn.addEventListener('click', function() {
 
 // Generate 버튼 클릭 시 팝업 표시
 generateButton.addEventListener('click', () => {
+    const checkId = document.getElementById('checkId');
+    const rawKopisGenId = window.kopisGenId;
+    const kopisGenId = rawKopisGenId.replace(/"/g, '');
+
+    if (checkId.value !== kopisGenId) {
+        console.error('Error: The input value is not correct');
+        return; // 조건을 만족하지 않으면 아래 코드를 실행하지 않음
+    }
+
     showGeneratePopup(); // 팝업 표시
     const generatePopupTitle = document.getElementById('generatePopupTitle');
     generatePopupTitle.innerText = '나만의 포스터를 만들어요!';
@@ -244,7 +253,7 @@ function toggleGenerateButton() {
 confirmGenerateBtn.addEventListener('click', () => {
     const promptText = document.getElementById('promptInput').value;
     const selectedImage = document.getElementById('selectedImage');
-
+    
     hideGeneratePopup(); // 생성 팝업 숨기기
     showLoadingPopup(); // 로딩 팝업 표시
 

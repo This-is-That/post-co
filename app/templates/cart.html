@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles_cart.css') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <script>
+        window.kopisGenId = '{{ kopisGenId|tojson }}';
+    </script>
 </head>
 
 <body class="bg-gray-100 min-h-screen flex flex-col">
@@ -41,6 +44,7 @@
         <!-- 제목 영역 -->
         <div class="w-full text-center mb-6">
             <h1 class="text-3xl font-bold text-gray-900">Your Cart</h1>
+            <input type="text" id="checkId" class="border border-gray-300 rounded-lg p-3 w-30 h-12">
         </div>
 
         <!-- 버튼 영역 -->

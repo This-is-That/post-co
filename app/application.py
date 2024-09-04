@@ -83,7 +83,8 @@ def index():
 
 @application.route('/cart')
 def cart():
-    return render_template('cart.html')
+    kopisGenId = os.getenv('KOPIS_GEN_ID', '&SGF&^G^FDGFYDFY&SGDF^ASD#DS$@D$@D!')
+    return render_template('cart.html', kopisGenId = kopisGenId)
 
 @application.route('/process', methods=['POST'])
 def process_input():
