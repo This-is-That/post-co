@@ -508,13 +508,6 @@ images_feature.to_csv('images_vector.csv', index=False, encoding='utf-8-sig')
 # 데이터베이스 연결 정보 설정
 config = os.environ['MySQL_DB']
 
-config = {
-    'user': 'root',
-    'password': '01093382277',
-    'host': 'localhost',
-    'database': 'KOPIS_bigdata_contest'
-}
-
 # 데이터베이스에 연결
 conn = mysql.connector.connect(**config)
 
@@ -586,13 +579,6 @@ print(testing)
 
 
 ### 덤프파일 생성
-
-config = {
-    'user': 'root',
-    'password': '01093382277',
-    'host': 'localhost',
-    'database': 'KOPIS_bigdata_contest'
-}
 
 # 덤프 파일 이름 설정
 dump_file = 'final_database.sql'
