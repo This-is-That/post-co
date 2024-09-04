@@ -22,7 +22,7 @@
 - **Team Name:** This-is-That
 - **Competition:** 2024 4th KOPIS Big Data Contest - Service Development Division
 - **Team Members:**
-  - **Jihwan Lee:** Client and Application Development
+  - **Jihwan Lee:** Client and Application Development & Web site Deployment
   - **Jaeyong Eom:** Data Collection and Preprocessing & Database Construction
 
 ## 주요 기능 (Key Features)
