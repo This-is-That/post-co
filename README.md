@@ -26,6 +26,8 @@
   - **Jaeyong Eom:** Data Collection and Preprocessing & Database Construction
 
 ## 주요 기능 (Key Features)
+![feature1](app/static/images/feature1.png) |![feature2](app/static/images/feature2.png)
+--- | --- |
 ### 1. 이미지 검색 (Image Search)
 - **메인 화면 (Main Interface):** 
   - 이미지 또는 텍스트를 업로드하면 입력된 정보와 유사한 공연 포스터들을 검색 결과로 제공합니다.
@@ -38,6 +40,9 @@
   - 포스터와 텍스트를 활용해 새로운 이미지를 생성할 수 있으며, 생성된 이미지를 재수정할 수 있습니다.
   - Users can save their favorite posters to a cart.
   - They can generate new images using selected posters and text, and further refine the generated images.
+
+## 시스템 구조 (System Architecture)
+![architecture](app/static/images/system_architecture.png)
 
 ## 사용된 기술 스택 (Tech Stack)
 - **Client:** HTML, CSS, JavaScript
