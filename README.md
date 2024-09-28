@@ -26,8 +26,8 @@
   - **Jaeyong Eom:** Data Collection and Preprocessing & Database Construction
 
 ## 주요 기능 (Key Features)
-![feature1](app/static/images/feature1.png) |![feature2](app/static/images/feature2.png)
---- | --- |
+![feature1](app/static/images/feature1.png)
+![feature2](app/static/images/feature2.png)
 ### 1. 이미지 검색 (Image Search)
 - **메인 화면 (Main Interface):** 
   - 이미지 또는 텍스트를 업로드하면 입력된 정보와 유사한 공연 포스터들을 검색 결과로 제공합니다.
